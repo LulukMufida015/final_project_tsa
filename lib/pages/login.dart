@@ -1,7 +1,10 @@
+import 'package:final_project/pages/detail_nasabah.dart';
+import 'package:final_project/pages/master.dart';
 import 'package:flutter/material.dart';
 import 'package:final_project/data/img.dart';
 import 'package:final_project/data/my_colors.dart';
 import 'package:final_project/pages/home.dart';
+// import 'package:final_project/pages/coba.dart';
 import 'package:final_project/widget/my_text.dart';
 
 class LoginPage extends StatefulWidget {
@@ -64,10 +67,10 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: Colors.white,
       appBar: PreferredSize(
           preferredSize: Size.fromHeight(0),
-          child: Container(color: MyColors.primary)),
+          child: Container(color: MyColors.primaryDark)),
       body: Stack(
         children: <Widget>[
-          Container(color: MyColors.primary, height: 220),
+          Container(color: MyColors.primaryDark, height: 220),
           Column(
             children: <Widget>[
               Container(height: 40),
@@ -92,7 +95,7 @@ class _LoginPageState extends State<LoginPage> {
                         Container(height: 25),
                         Text("SIGN IN",
                             style: MyText.title(context)!.copyWith(
-                                color: Colors.green[500],
+                                color: MyColors.hijau.withOpacity(0.6),
                                 fontWeight: FontWeight.bold)),
                         TextField(
                           keyboardType: TextInputType.text,
@@ -133,7 +136,7 @@ class _LoginPageState extends State<LoginPage> {
                           height: 40,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              primary: MyColors.primary,
+                              primary: MyColors.primaryDark,
                               shape: RoundedRectangleBorder(
                                   borderRadius: new BorderRadius.circular(20)),
                             ),
@@ -144,23 +147,11 @@ class _LoginPageState extends State<LoginPage> {
                             onPressed: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => HomePage()),
+                              MaterialPageRoute(builder: (context) => MyMaster()),
                             );
                           },
                           ),
                         ),
-                        // Container(
-                        //   width: double.infinity,
-                        //   child: TextButton(
-                        //     style: TextButton.styleFrom(
-                        //         primary: Colors.transparent),
-                        //     child: Text(
-                        //       "New user? Sign Up",
-                        //       style: TextStyle(color: MyColors.primaryLight),
-                        //     ),
-                        //     onPressed: () {},
-                        //   ),
-                        // ),
                       ],
                     ),
                   ))

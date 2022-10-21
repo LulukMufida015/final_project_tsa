@@ -20,8 +20,8 @@ class MyApp extends StatelessWidget {
         appBarTheme: const AppBarTheme(
           backgroundColor: MyColors.white,
           iconTheme: IconThemeData(color: Colors.black),
-          centerTitle: true,
-          titleTextStyle: TextStyle(color: Colors.black, fontSize: 20),
+          // centerTitle: true,
+          titleTextStyle: TextStyle(color: Colors.black, fontSize: 16),
         ),
       ),
       initialRoute: '/',

@@ -1,11 +1,18 @@
 import 'package:final_project/pages/detail_nasabah.dart';
 import 'package:final_project/pages/master.dart';
+import 'package:final_project/pages/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:final_project/data/img.dart';
 import 'package:final_project/data/my_colors.dart';
 import 'package:final_project/pages/home.dart';
 // import 'package:final_project/pages/coba.dart';
 import 'package:final_project/widget/my_text.dart';
+
+import 'dart:convert';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,6 +22,57 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  //Login Post
+  final String _tokenAuth = '';
+  final TextEditingController _inputEmail = TextEditingController();
+  final TextEditingController _inputPassword = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  var UserId;
+  var _data;
+
+  Future _postDataJson() async {
+    try {
+      var url = Uri.parse('https://frontliner.intermediatech.id/api/sign-in');
+      var response = await http.post(url, headers: {
+        'Authorization': 'Bearer ' + _tokenAuth
+      }, body: {
+        'email': _inputEmail.text,
+        'password': _inputPassword.text,
+      });
+      setState(() {
+        _data = json.decode(response.body)['data'];
+      });
+      if (response.statusCode == 200) {
+        print(_data['id']);
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        postData(_data['marketing_id'], _data['name'], _data['email'], _data['type'], _data['photo'], _data['phone']);
+        print('sukses');
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const MyMaster()),
+        );
+      } else {
+        print('error');
+      }
+    } on SocketException {
+      print('no internet');
+    } on HttpException {
+      print('error');
+    } on FormatException {
+      print('error');
+    }
+  }
+
+  postData(id, name, email, type, photo, phone) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setInt('idUser', id);
+    prefs.setString('nameUser', name);
+    prefs.setString('emailUser', email);
+    prefs.setString('typeUser', type);
+    prefs.setString('photoUser', photo);
+    prefs.setString('phoneUser', phone);
+  }
+
   final TextEditingController _pin = TextEditingController();
 
   bool checkValid = true;
@@ -29,7 +87,7 @@ class _LoginPageState extends State<LoginPage> {
             context,
             MaterialPageRoute(
               builder: (context) {
-                return  HomePage();
+                return HomePage();
               },
             ),
           );
@@ -89,70 +147,98 @@ class _LoginPageState extends State<LoginPage> {
                   clipBehavior: Clip.antiAliasWithSaveLayer,
                   child: Container(
                     padding: EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Container(height: 25),
-                        Text("SIGN IN",
-                            style: MyText.title(context)!.copyWith(
-                                color: MyColors.hijau.withOpacity(0.6),
-                                fontWeight: FontWeight.bold)),
-                        TextField(
-                          keyboardType: TextInputType.text,
-                          style: TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            labelText: "Email",
-                            labelStyle: TextStyle(color: Colors.blueGrey[400]),
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                  color: Colors.blueGrey[400]!, width: 1),
-                            ),
-                            focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                  color: Colors.blueGrey[400]!, width: 2),
-                            ),
-                          ),
-                        ),
-                        Container(height: 25),
-                        TextField(
-                          keyboardType: TextInputType.text,
-                          style: TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            labelText: "Password",
-                            labelStyle: TextStyle(color: Colors.blueGrey[400]),
-                            enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                  color: Colors.blueGrey[400]!, width: 1),
-                            ),
-                            focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                  color: Colors.blueGrey[400]!, width: 2),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Container(height: 25),
+                          Text("SIGN IN",
+                              style: MyText.title(context)!.copyWith(
+                                  color: MyColors.red,
+                                  fontWeight: FontWeight.bold)),
+                          TextFormField(
+                            controller: _inputEmail,
+                            validator: (value) {
+                              if (value!.isEmpty) {
+                                return 'Email tidak boleh kosong';
+                              }
+                              return null;
+                            },
+                            keyboardType: TextInputType.text,
+                            style: TextStyle(color: Colors.black),
+                            decoration: InputDecoration(
+                              labelText: "Email",
+                              labelStyle:
+                                  TextStyle(color: Colors.blueGrey[400]),
+                              enabledBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: Colors.blueGrey[400]!, width: 1),
+                              ),
+                              focusedBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: Colors.blueGrey[400]!, width: 2),
+                              ),
                             ),
                           ),
-                        ),
-                        Container(height: 25),
-                        Container(
-                          width: double.infinity,
-                          height: 40,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              primary: MyColors.primaryDark,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: new BorderRadius.circular(20)),
+                          Container(height: 25),
+                          TextFormField(
+                            controller: _inputPassword,
+                            validator: (value) {
+                              if (value!.isEmpty) {
+                                return 'Password tidak boleh kosong';
+                              }
+                              return null;
+                            },
+                            obscureText: passwordHidden,
+                            keyboardType: TextInputType.text,
+                            style: TextStyle(color: Colors.black),
+                            decoration: InputDecoration(
+                              labelText: "Password",
+                              suffixIcon: IconButton(
+                                onPressed: () {
+                                  _showPassword();
+                                },
+                                icon: (passwordHidden)
+                                    ? const Icon(Icons.visibility)
+                                    : const Icon(Icons.visibility_off),
+                              ),
+                              labelStyle:
+                                  TextStyle(color: Colors.blueGrey[400]),
+                              enabledBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: Colors.blueGrey[400]!, width: 1),
+                              ),
+                              focusedBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: Colors.blueGrey[400]!, width: 2),
+                              ),
                             ),
-                            child: Text(
-                              "SUBMIT",
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => MyMaster()),
-                            );
-                          },
                           ),
-                        ),
-                      ],
+                          Container(height: 25),
+                          Container(
+                            width: double.infinity,
+                            height: 40,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                primary: MyColors.primaryDark,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        new BorderRadius.circular(20)),
+                              ),
+                              child: Text(
+                                "SUBMIT",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              onPressed: () {
+                                if (_formKey.currentState!.validate()) {
+                                  _postDataJson();
+                                }
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ))
             ],

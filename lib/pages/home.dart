@@ -1,5 +1,6 @@
 import 'package:final_project/pages/daftar_nasabah.dart';
 import 'package:final_project/pages/detail_nasabah.dart';
+import 'package:final_project/pages/daftar_nasabah_status.dart';
 import 'package:final_project/pages/home.dart';
 import 'package:final_project/pages/profile.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,11 @@ import 'package:final_project/data/my_colors.dart';
 import 'package:final_project/data/my_strings.dart';
 import 'package:final_project/widget/my_text.dart';
 import 'package:badges/badges.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:io';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -18,6 +24,84 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
+  //  List _data = [];
+  var _data;
+  final String _tokenAuth = '';
+  String nameUser = '';
+  String typeUser = '';
+  String countBaru = '';
+  String countProgress = '';
+  String countHot = '';
+  String countWarm = '';
+  String countCold = '';
+  String countUnqulified = '';
+  String countClosed = '';
+  String namaNasabah = '';
+  String jenisNasabah = '';
+  String statusNasabah = '';
+  String tanggal = '';
+  String photoUser = '';
+  var IdNewNasabah;
+
+  var UserId;
+  var NasabahId;
+  var nasabahBaru;
+  Future _getAllData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    UserId = prefs.getInt('idUser');
+    nameUser = prefs.getString('nameUser').toString();
+    typeUser = prefs.getString('typeUser').toString();
+    photoUser = prefs.getString('photo').toString();
+    // print(UserId);
+    try {
+      var url = Uri.parse(
+          'https://frontliner.intermediatech.id/api/home/data?marketing_id=' + 
+      UserId.toString());
+      var response = await http.get(
+        url,
+        headers: {'Authorization': 'Bearer ' + _tokenAuth},
+      );
+      if (response.statusCode == 200) {
+        setState(() {
+          print('sukses data');
+          print(UserId);
+          _data = json.decode(response.body)['data'];
+          countBaru = _data['count']['badges']['new'].toString();
+          countProgress = _data['count']['badges']['on_progress'].toString();
+          countHot = _data['count']['type']['hot'].toString();
+          countWarm = _data['count']['type']['warm'].toString();
+          countCold = _data['count']['type']['cold'].toString();
+          countUnqulified = _data['count']['type']['unqualified'].toString();
+          countClosed = _data['count']['type']['closed'].toString();
+          nasabahBaru = _data['new_nasabah'];
+          if (_data['new_nasabah'] != null) {
+            namaNasabah = _data['new_nasabah']['nama_nasabah'].toString();
+            jenisNasabah = _data['new_nasabah']['jenis'].toString();
+            statusNasabah = _data['new_nasabah']['status'].toString();
+            tanggal = _data['new_nasabah']['created_at'].toString();
+            IdNewNasabah = _data['new_nasabah']['id'];
+          }
+        });
+      } else {
+        print('error');
+      }
+    } on SocketException {
+      print('no internet');
+    } on HttpException {
+      print('error');
+    } on FormatException {
+      print('error');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _getAllData().whenComplete(() {
+      setState(() {});
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,7 +125,6 @@ class HomePageState extends State<HomePage> {
               ),
               child: Column(
                 children: <Widget>[
-                  Container(height: 10,),
                   Container(
                     height: 15,
                   ),
@@ -50,21 +133,21 @@ class HomePageState extends State<HomePage> {
                     backgroundColor: Colors.white,
                     child: CircleAvatar(
                       radius: 90,
-                      backgroundImage: AssetImage("assets/pp.jpg"),
+                      backgroundImage: NetworkImage(photoUser != null ? photoUser : "https://frontliner.intermediatech.id/admin/image/profile/marketing/597008802-photo-marketing.png", scale: 1),
                     ),
                   ),
                   Container(
-                    height: 15,
+                    height: 10,
                   ),
                   Container(
-                    margin: EdgeInsets.symmetric(horizontal: 35, vertical: 3),
-                    child: Text("Luluk Mufida",
+                    margin: EdgeInsets.symmetric(horizontal: 35),
+                    child: Text(nameUser,
                         style: MyText.title(context)!
                             .copyWith(color: MyColors.white)),
                   ),
                   Container(
                     margin: EdgeInsets.symmetric(horizontal: 35, vertical: 2),
-                    child: Text("Marketing Funding",
+                    child: Text("Marketing " + typeUser,
                         style: MyText.body1(context)!
                             .copyWith(color: MyColors.white)),
                   ),
@@ -74,19 +157,6 @@ class HomePageState extends State<HomePage> {
                       color: MyColors.red,
                       borderRadius: BorderRadius.all(Radius.circular(6)),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        '100 point',
-                        style: TextStyle(
-                            color: MyColors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    height: 15,
                   ),
                 ],
               ),
@@ -120,7 +190,8 @@ class HomePageState extends State<HomePage> {
                               borderRadius:
                                   BorderRadius.all(Radius.circular(10)),
                               border: Border.all(
-                                  width: 2.0, color: MyColors.primaryDark.withOpacity(0.8)),
+                                  width: 1.0,
+                                  color: MyColors.primaryDark.withOpacity(0.8)),
                               boxShadow: [
                                 BoxShadow(
                                   color: MyColors.grey_40,
@@ -130,7 +201,7 @@ class HomePageState extends State<HomePage> {
                                   ),
                                   blurRadius: 5.0,
                                   spreadRadius: 2.0,
-                                ),  //BoxShadow
+                                ), //BoxShadow
                               ],
                             ),
                             child: Row(
@@ -157,10 +228,11 @@ class HomePageState extends State<HomePage> {
                                       padding: const EdgeInsets.only(
                                           left: 8, bottom: 8),
                                       child: Text(
-                                        "400",
+                                        countBaru,
                                         style: TextStyle(
                                             fontSize: 20,
-                                            fontWeight: FontWeight.bold, color: MyColors.primaryDark),
+                                            fontWeight: FontWeight.bold,
+                                            color: MyColors.primaryDark),
                                         textAlign: TextAlign.left,
                                       ),
                                     )
@@ -181,7 +253,8 @@ class HomePageState extends State<HomePage> {
                               borderRadius:
                                   BorderRadius.all(Radius.circular(10)),
                               border: Border.all(
-                                  width: 2.0, color: MyColors.primaryDark.withOpacity(0.8)),
+                                  width: 1,
+                                  color: MyColors.primaryDark.withOpacity(0.8)),
                               boxShadow: [
                                 BoxShadow(
                                   color: MyColors.grey_40,
@@ -191,7 +264,7 @@ class HomePageState extends State<HomePage> {
                                   ),
                                   blurRadius: 5.0,
                                   spreadRadius: 2.0,
-                                ),  //BoxShadow
+                                ), //BoxShadow
                               ],
                             ),
                             child: Row(
@@ -218,10 +291,11 @@ class HomePageState extends State<HomePage> {
                                       padding: const EdgeInsets.only(
                                           left: 8, bottom: 8),
                                       child: Text(
-                                        "500",
+                                        countProgress,
                                         style: TextStyle(
                                             fontSize: 20,
-                                            fontWeight: FontWeight.bold, color: MyColors.primaryDark),
+                                            fontWeight: FontWeight.bold,
+                                            color: MyColors.primaryDark),
                                         textAlign: TextAlign.left,
                                       ),
                                     )
@@ -260,64 +334,76 @@ class HomePageState extends State<HomePage> {
                       width: 15,
                     ),
                     Expanded(
-                      child: Badge(
-                        shape: BadgeShape.square,
-                        borderRadius: BorderRadius.circular(5),
-                        position: BadgePosition.topEnd(top: -12, end: -20),
-                        padding: EdgeInsets.all(2),
-                        badgeContent: Text(
-                          '1508',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        badgeColor: Colors.red,
-                        child: Column(
-                          children: [
-                            Container(
-                                width: double.infinity,
-                                // height: 50,
-                                decoration: BoxDecoration(
-                                  color: MyColors.white,
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(8)),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: MyColors.grey_40,
-                                      offset: const Offset(
-                                        2.0,
-                                        2.0,
-                                      ),
-                                      blurRadius: 3.0,
-                                      spreadRadius: 2.0,
-                                    ), //BoxShadow
-                                    BoxShadow(
-                                      color: Colors.white,
-                                      offset: const Offset(0.0, 0.0),
-                                      blurRadius: 0.0,
-                                      spreadRadius: 0.0,
-                                    ), //BoxShadow
-                                  ],
-                                  border: Border.all(
-                                      width: 2.0, color: MyColors.primaryDark.withOpacity(0.8)),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(6.0),
-                                  child: Icon(
-                                    Icons.local_fire_department,
-                                    color: MyColors.primaryDark,
-                                    size: 35,
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              DaftarNasabahStatus(status: 'hot',)),
+                                    );
+                        },
+                        child: Badge(
+                          shape: BadgeShape.square,
+                          borderRadius: BorderRadius.circular(5),
+                          position: BadgePosition.topEnd(top: -12, end: -1),
+                          padding: EdgeInsets.all(2),
+                          badgeContent: Text(
+                            countHot,
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          badgeColor: Colors.red,
+                          child: Column(
+                            children: [
+                              Container(
+                                  // width: double.infinity,
+                                  // height: 50,
+                                  decoration: BoxDecoration(
+                                    color: MyColors.white,
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(8)),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: MyColors.grey_40,
+                                        offset: const Offset(
+                                          2.0,
+                                          2.0,
+                                        ),
+                                        blurRadius: 3.0,
+                                        spreadRadius: 2.0,
+                                      ), //BoxShadow
+                                      BoxShadow(
+                                        color: Colors.white,
+                                        offset: const Offset(0.0, 0.0),
+                                        blurRadius: 0.0,
+                                        spreadRadius: 0.0,
+                                      ), //BoxShadow
+                                    ],
+                                    border: Border.all(
+                                        width: 1,
+                                        color: MyColors.primaryDark
+                                            .withOpacity(0.8)),
                                   ),
-                                )),
-                            Container(height: 10),
-                            Container(
-                              child: Text(
-                                "Hot",
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            )
-                          ],
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(6.0),
+                                    child: Icon(
+                                      Icons.local_fire_department,
+                                      color: MyColors.primaryDark,
+                                      size: 35,
+                                    ),
+                                  )),
+                              Container(height: 10),
+                              Container(
+                                child: Text(
+                                  "Hot",
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              )
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -325,64 +411,76 @@ class HomePageState extends State<HomePage> {
                       width: 15,
                     ),
                     Expanded(
-                      child: Badge(
-                        shape: BadgeShape.square,
-                        borderRadius: BorderRadius.circular(5),
-                        position: BadgePosition.topEnd(top: -12, end: -20),
-                        padding: EdgeInsets.all(2),
-                        badgeContent: Text(
-                          '1508',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        badgeColor: Colors.red,
-                        child: Column(
-                          children: [
-                            Container(
-                                width: double.infinity,
-                                // height: 50,
-                                decoration: BoxDecoration(
-                                  color: MyColors.white,
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(8)),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: MyColors.grey_40,
-                                      offset: const Offset(
-                                        2.0,
-                                        2.0,
-                                      ),
-                                      blurRadius: 3.0,
-                                      spreadRadius: 2.0,
-                                    ), //BoxShadow
-                                    BoxShadow(
-                                      color: Colors.white,
-                                      offset: const Offset(0.0, 0.0),
-                                      blurRadius: 0.0,
-                                      spreadRadius: 0.0,
-                                    ), //BoxShadow
-                                  ],
-                                  border: Border.all(
-                                      width: 2.0, color: MyColors.primaryDark.withOpacity(0.8)),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(6.0),
-                                  child: Icon(
-                                    Icons.coffee,
-                                    color: MyColors.primaryDark,
-                                    size: 35,
+                      child: GestureDetector(
+                        onTap:  () {
+                          Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              DaftarNasabahStatus(status: 'warm',)),
+                                    );
+                        },
+                        child: Badge(
+                          shape: BadgeShape.square,
+                          borderRadius: BorderRadius.circular(5),
+                          position: BadgePosition.topEnd(top: -12, end: -1),
+                          padding: EdgeInsets.all(2),
+                          badgeContent: Text(
+                            countWarm,
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          badgeColor: Colors.red,
+                          child: Column(
+                            children: [
+                              Container(
+                                  // width: double.infinity,
+                                  // height: 50,
+                                  decoration: BoxDecoration(
+                                    color: MyColors.white,
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(8)),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: MyColors.grey_40,
+                                        offset: const Offset(
+                                          2.0,
+                                          2.0,
+                                        ),
+                                        blurRadius: 3.0,
+                                        spreadRadius: 2.0,
+                                      ), //BoxShadow
+                                      BoxShadow(
+                                        color: Colors.white,
+                                        offset: const Offset(0.0, 0.0),
+                                        blurRadius: 0.0,
+                                        spreadRadius: 0.0,
+                                      ), //BoxShadow
+                                    ],
+                                    border: Border.all(
+                                        width: 1,
+                                        color: MyColors.primaryDark
+                                            .withOpacity(0.8)),
                                   ),
-                                )),
-                            Container(height: 10),
-                            Container(
-                              child: Text(
-                                "Warm",
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            )
-                          ],
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(6.0),
+                                    child: Icon(
+                                      Icons.coffee,
+                                      color: MyColors.primaryDark,
+                                      size: 35,
+                                    ),
+                                  )),
+                              Container(height: 10),
+                              Container(
+                                child: Text(
+                                  "Warm",
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              )
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -390,64 +488,76 @@ class HomePageState extends State<HomePage> {
                       width: 15,
                     ),
                     Expanded(
-                      child: Badge(
-                        shape: BadgeShape.square,
-                        borderRadius: BorderRadius.circular(5),
-                        position: BadgePosition.topEnd(top: -12, end: -20),
-                        padding: EdgeInsets.all(2),
-                        badgeContent: Text(
-                          '1508',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        badgeColor: Colors.red,
-                        child: Column(
-                          children: [
-                            Container(
-                                width: double.infinity,
-                                // height: 50,
-                                decoration: BoxDecoration(
-                                  color: MyColors.white,
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(8)),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: MyColors.grey_40,
-                                      offset: const Offset(
-                                        2.0,
-                                        2.0,
-                                      ),
-                                      blurRadius: 3.0,
-                                      spreadRadius: 2.0,
-                                    ), //BoxShadow
-                                    BoxShadow(
-                                      color: Colors.white,
-                                      offset: const Offset(0.0, 0.0),
-                                      blurRadius: 0.0,
-                                      spreadRadius: 0.0,
-                                    ), //BoxShadow
-                                  ],
-                                  border: Border.all(
-                                      width: 2.0, color: MyColors.primaryDark.withOpacity(0.8)),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(6.0),
-                                  child: Icon(
-                                    Icons.ac_unit,
-                                    color: MyColors.primaryDark,
-                                    size: 35,
+                      child: GestureDetector(
+                        onTap:  () {
+                          Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              DaftarNasabahStatus(status: 'cold',)),
+                                    );
+                        },
+                        child: Badge(
+                          shape: BadgeShape.square,
+                          borderRadius: BorderRadius.circular(5),
+                          position: BadgePosition.topEnd(top: -12, end: -1),
+                          padding: EdgeInsets.all(2),
+                          badgeContent: Text(
+                            countCold,
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          badgeColor: Colors.red,
+                          child: Column(
+                            children: [
+                              Container(
+                                  // width: double.infinity,
+                                  // height: 50,
+                                  decoration: BoxDecoration(
+                                    color: MyColors.white,
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(8)),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: MyColors.grey_40,
+                                        offset: const Offset(
+                                          2.0,
+                                          2.0,
+                                        ),
+                                        blurRadius: 3.0,
+                                        spreadRadius: 2.0,
+                                      ), //BoxShadow
+                                      BoxShadow(
+                                        color: Colors.white,
+                                        offset: const Offset(0.0, 0.0),
+                                        blurRadius: 0.0,
+                                        spreadRadius: 0.0,
+                                      ), //BoxShadow
+                                    ],
+                                    border: Border.all(
+                                        width: 1,
+                                        color: MyColors.primaryDark
+                                            .withOpacity(0.8)),
                                   ),
-                                )),
-                            Container(height: 10),
-                            Container(
-                              child: Text(
-                                "Cold",
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            )
-                          ],
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(6.0),
+                                    child: Icon(
+                                      Icons.ac_unit,
+                                      color: MyColors.primaryDark,
+                                      size: 35,
+                                    ),
+                                  )),
+                              Container(height: 10),
+                              Container(
+                                child: Text(
+                                  "Cold",
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              )
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -455,64 +565,77 @@ class HomePageState extends State<HomePage> {
                       width: 15,
                     ),
                     Expanded(
-                      child: Badge(
-                        shape: BadgeShape.square,
-                        borderRadius: BorderRadius.circular(5),
-                        position: BadgePosition.topEnd(top: -12, end: -20),
-                        padding: EdgeInsets.all(2),
-                        badgeContent: Text(
-                          '1508',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        badgeColor: Colors.red,
-                        child: Column(
-                          children: [
-                            Container(
-                                width: double.infinity,
-                                // height: 50,
-                                decoration: BoxDecoration(
-                                  color: MyColors.white,
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(8)),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: MyColors.grey_40,
-                                      offset: const Offset(
-                                        2.0,
-                                        2.0,
-                                      ),
-                                      blurRadius: 3.0,
-                                      spreadRadius: 2.0,
-                                    ), //BoxShadow
-                                    BoxShadow(
-                                      color: Colors.white,
-                                      offset: const Offset(0.0, 0.0),
-                                      blurRadius: 0.0,
-                                      spreadRadius: 0.0,
-                                    ), //BoxShadow
-                                  ],
-                                  border: Border.all(
-                                      width: 2.0, color: MyColors.primaryDark.withOpacity(0.8)),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(6.0),
-                                  child: Icon(
-                                    Icons.cancel,
-                                    color: MyColors.primaryDark,
-                                    size: 35,
+                      child: GestureDetector(
+                        onTap:  () {
+                          Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              DaftarNasabahStatus(status: 'unqualified',)),
+                                    );
+                        },
+                        child: Badge(
+                          shape: BadgeShape.square,
+                          borderRadius: BorderRadius.circular(5),
+                          position: BadgePosition.topEnd(top: -12, end: -1),
+                          padding: EdgeInsets.all(2),
+                          badgeContent: Text(
+                            countUnqulified,
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          badgeColor: Colors.red,
+                          child: Column(
+                            children: [
+                              Container(
+                                  // width: double.infinity,
+                                  // height: 50,
+                                  decoration: BoxDecoration(
+                                    color: MyColors.white,
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(8)),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: MyColors.grey_40,
+                                        offset: const Offset(
+                                          2.0,
+                                          2.0,
+                                        ),
+                                        blurRadius: 3.0,
+                                        spreadRadius: 2.0,
+                                      ), //BoxShadow
+                                      BoxShadow(
+                                        color: Colors.white,
+                                        offset: const Offset(0.0, 0.0),
+                                        blurRadius: 0.0,
+                                        spreadRadius: 0.0,
+                                      ), //BoxShadow
+                                    ],
+                                    border: Border.all(
+                                        width: 1,
+                                        color: MyColors.primaryDark
+                                            .withOpacity(0.8)),
                                   ),
-                                )),
-                            Container(height: 10),
-                            Container(
-                              child: Text(
-                                "Unqualified",
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 9),
-                              ),
-                            )
-                          ],
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(6.0),
+                                    child: Icon(
+                                      Icons.cancel,
+                                      color: MyColors.primaryDark,
+                                      size: 35,
+                                    ),
+                                  )),
+                              Container(height: 10),
+                              Container(
+                                child: Text(
+                                  "Unqualified",
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold, fontSize: 9),
+                                ),
+                              )
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -520,74 +643,86 @@ class HomePageState extends State<HomePage> {
                       width: 15,
                     ),
                     Expanded(
-                      child: Badge(
-                        shape: BadgeShape.square,
-                        borderRadius: BorderRadius.circular(5),
-                        position: BadgePosition.topEnd(top: -12, end: -20),
-                        padding: EdgeInsets.all(2),
-                        badgeContent: Text(
-                          '1508',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        badgeColor: Colors.red,
-                        child: Column(
-                          children: [
-                            Container(
-                                width: double.infinity,
-                                // height: 50,
-                                decoration: BoxDecoration(
-                                  color: MyColors.white,
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(8)),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: MyColors.grey_40,
-                                      offset: const Offset(
-                                        2.0,
-                                        2.0,
-                                      ),
-                                      blurRadius: 3.0,
-                                      spreadRadius: 2.0,
-                                    ), //BoxShadow
-                                    BoxShadow(
-                                      color: Colors.white,
-                                      offset: const Offset(0.0, 0.0),
-                                      blurRadius: 0.0,
-                                      spreadRadius: 0.0,
-                                    ), //BoxShadow
-                                  ],
-                                  border: Border.all(
-                                      width: 2.0, color: MyColors.primaryDark.withOpacity(0.8)),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(6.0),
-                                  child: Icon(
-                                    Icons.how_to_reg,
-                                    color: MyColors.primaryDark,
-                                    size: 35,
+                      child: GestureDetector(
+                        onTap:  () {
+                          Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              DaftarNasabahStatus(status: 'closed',)),
+                                    );
+                        },
+                        child: Badge(
+                          shape: BadgeShape.square,
+                          borderRadius: BorderRadius.circular(5),
+                          position: BadgePosition.topEnd(top: -12, end: -1),
+                          padding: EdgeInsets.all(2),
+                          badgeContent: Text(
+                            countClosed,
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          badgeColor: Colors.red,
+                          child: Column(
+                            children: [
+                              Container(
+                                  // width: double.infinity,
+                                  // height: 50,
+                                  decoration: BoxDecoration(
+                                    color: MyColors.white,
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(8)),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: MyColors.grey_40,
+                                        offset: const Offset(
+                                          2.0,
+                                          2.0,
+                                        ),
+                                        blurRadius: 3.0,
+                                        spreadRadius: 2.0,
+                                      ), //BoxShadow
+                                      BoxShadow(
+                                        color: Colors.white,
+                                        offset: const Offset(0.0, 0.0),
+                                        blurRadius: 0.0,
+                                        spreadRadius: 0.0,
+                                      ), //BoxShadow
+                                    ],
+                                    border: Border.all(
+                                        width: 1,
+                                        color: MyColors.primaryDark
+                                            .withOpacity(0.8)),
                                   ),
-                                )),
-                            Container(height: 10),
-                            Container(
-                              child: Text(
-                                "Closed",
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            )
-                          ],
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(6.0),
+                                    child: Icon(
+                                      Icons.how_to_reg,
+                                      color: MyColors.primaryDark,
+                                      size: 35,
+                                    ),
+                                  )),
+                              Container(height: 10),
+                              Container(
+                                child: Text(
+                                  "Closed",
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              )
+                            ],
+                          ),
                         ),
                       ),
                     ),
                     Container(
                       width: 15,
                     ),
-                    
                     Container(width: 15)
                   ],
                 ),
+
                 // Container(height: 15),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -605,178 +740,226 @@ class HomePageState extends State<HomePage> {
                   ],
                 ),
                 Container(height: 10),
-                Row(
-                  children: [
-                    Container(
-                      width: 15,
-                    ),
-                    Expanded(
-                      child: Container(
-                        padding:
-                            EdgeInsets.symmetric(vertical: 15, horizontal: 15),
-                        width: (MediaQuery.of(context).size.width),
-                        decoration: BoxDecoration(
-                            color: MyColors.white,
-                            borderRadius: BorderRadius.all(Radius.circular(10)),
-                            border: Border.all(
-                                width: 2.0, color: MyColors.primaryDark)),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text(
-                                        "Nama     :",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    )
-                                  ],
-                                ),
-                                Column(children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 25),
-                                    child: Text("Nama Nasabah Frontliner"),
-                                  )
-                                ]),
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text(
-                                        "Jenis :",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    )
-                                  ],
-                                ),
-                                Column(children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 25),
-                                    child: Text("Funding"),
-                                  )
-                                ]),
-                              ],
-                            ),
-                            Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text(
-                                      "Created at 08:00 PM 09/09/2022",
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ]),
-                            Row(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Container(
-                                    width: 140,
-                                    height: 30,
-                                    decoration: BoxDecoration(
-                                      color: MyColors.hijau.withOpacity(0.6),
+                (nasabahBaru != null
+                    ? Column(
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 15,
+                              ),
+                              Expanded(
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: 15, horizontal: 15),
+                                  width: (MediaQuery.of(context).size.width),
+                                  decoration: BoxDecoration(
+                                      color: MyColors.white,
                                       borderRadius:
                                           BorderRadius.all(Radius.circular(10)),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(
-                                          left: 5, right: 5),
-                                      child: Center(
-                                        child: Text(
-                                          "Perlu difollow Up",
-                                          style: TextStyle(color: Colors.white),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Align(
-                                    alignment: Alignment.topRight,
-                                    child: Container(
-                                      width: 100,
-                                      child: ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          primary: MyColors.primaryDark,
-                                          shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  new BorderRadius.circular(
-                                                      10)),
-                                        ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 5, right: 5),
-                                          child: Text(
-                                            "View",
-                                            style:
-                                                TextStyle(color: Colors.white),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: MyColors.grey_40,
+                                          offset: const Offset(
+                                            2.0,
+                                            2.0,
                                           ),
-                                        ),
-                                        onPressed: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    DetailNasabah()),
-                                          );
-                                        },
+                                          blurRadius: 3.0,
+                                          spreadRadius: 2.0,
+                                        ), //BoxShadow
+                                        BoxShadow(
+                                          color: Colors.white,
+                                          offset: const Offset(0.0, 0.0),
+                                          blurRadius: 0.0,
+                                          spreadRadius: 0.0,
+                                        ), //BoxShadow
+                                      ],
+                                      border: Border.all(
+                                          width: 1,
+                                          color: MyColors.primaryDark)),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.start,
+                                            children: [
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.all(8.0),
+                                                child: Text(
+                                                  "Nama",
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              )
+                                            ],
+                                          ),
+                                          Column(children: [
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  left: 25),
+                                              child: Text(": " + namaNasabah),
+                                            )
+                                          ]),
+                                        ],
                                       ),
-                                    ),
+                                      Row(
+                                        children: [
+                                          Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.start,
+                                            children: [
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.all(8.0),
+                                                child: Text(
+                                                  "Jenis",
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              )
+                                            ],
+                                          ),
+                                          Column(children: [
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  left: 25),
+                                              child: Text(": " + jenisNasabah),
+                                            )
+                                          ]),
+                                        ],
+                                      ),
+                                      Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.start,
+                                          children: [
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.all(8.0),
+                                              child: Text(
+                                                tanggal,
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ]),
+                                      Row(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Container(
+                                              width: 140,
+                                              height: 30,
+                                              decoration: BoxDecoration(
+                                                color: MyColors.hijau
+                                                    .withOpacity(0.6),
+                                                borderRadius: BorderRadius.all(
+                                                    Radius.circular(10)),
+                                              ),
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                    left: 5, right: 5),
+                                                child: Center(
+                                                  child: Text(
+                                                    statusNasabah,
+                                                    style: TextStyle(
+                                                        color: Colors.white),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: Align(
+                                              alignment: Alignment.topRight,
+                                              child: Container(
+                                                width: 100,
+                                                child: ElevatedButton(
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    primary:
+                                                        MyColors.primaryDark,
+                                                    shape: RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            new BorderRadius
+                                                                .circular(10)),
+                                                  ),
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            left: 5, right: 5),
+                                                    child: Text(
+                                                      "View",
+                                                      style: TextStyle(
+                                                          color: Colors.white),
+                                                    ),
+                                                  ),
+                                                  onPressed: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              DetailNasabah(id: IdNewNasabah)),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          Container(width: 15)
+                                        ],
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                Container(width: 15)
-                              ],
-                            )
-                          ],
+                              ),
+                              Container(width: 15)
+                            ],
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(width: 15),
+                              Padding(
+                                padding: const EdgeInsets.all(15),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              DaftarNasabah()),
+                                    );
+                                  },
+                                  child: Text(
+                                    "Load More",
+                                    style: TextStyle(
+                                        decoration: TextDecoration.underline,
+                                        color: MyColors.primaryDark),
+                                  ),
+                                ),
+                              )
+                            ],
+                          )
+                        ],
+                      )
+                    : Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(15),
+                          child: Text(
+                            'Daftar Nasabah Belum Tersedia',
+                            style: TextStyle(color: MyColors.grey_60),
+                          ),
                         ),
-                      ),
-                    ),
-                    Container(width: 15)
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(width: 15),
-                    Padding(
-                      padding: const EdgeInsets.all(15),
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => DaftarNasabah()),
-                          );
-                        },
-                        child: Text(
-                          "Load More",
-                          style: TextStyle(
-                              decoration: TextDecoration.underline,
-                              color: MyColors.primaryDark),
-                        ),
-                      ),
-                    )
-                  ],
-                )
+                      )),
               ],
             ),
           ],

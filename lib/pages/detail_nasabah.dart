@@ -5,14 +5,66 @@ import 'package:flutter/src/foundation/key.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:date_field/date_field.dart';
 
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:io';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
+
 class DetailNasabah extends StatefulWidget {
-  const DetailNasabah({Key? key}) : super(key: key);
+  final int id;
+  const DetailNasabah({Key? key, required this.id}) : super(key: key);
 
   @override
   State<DetailNasabah> createState() => _DetailNasabahState();
 }
 
 class _DetailNasabahState extends State<DetailNasabah> {
+  var _data;
+  final String _tokenAuth = '';
+
+  var marketing_id;
+  String nama_nasabah = "";
+  String jenis = "";
+  String created_at = "";
+  String status = "";
+
+  Future _getAllData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    marketing_id = prefs.getInt('idUser');
+    try {
+      var url = Uri.parse('https://frontliner.intermediatech.id/api/home/assignment?id=' + widget.id.toString());
+      var response = await http.get(
+        url,
+        headers: {'Authorization': 'Bearer ' + _tokenAuth},
+      );
+      if (response.statusCode == 200) {
+        setState(() {
+          _data = json.decode(response.body)['data'];
+        });
+        nama_nasabah = _data['nasabah']['nama_nasabah'].toString();
+        jenis = _data['nasabah']['jenis'].toString();
+        created_at = _data['nasabah']['created_at'].toString();
+        status = _data['nasabah']['status'].toString();
+      } else {
+        print('error');
+      }
+    } on SocketException {
+      print('no internet');
+    } on HttpException {
+      print('error');
+    } on FormatException {
+      print('error');
+    }
+  }
+
+   @override
+  void initState() {
+    super.initState();
+    _getAllData();
+  }
+
+
   var items = ["Mangga", "Nangka", "Semangka"];
   String dropdownvalue = "items";
   @override
@@ -39,7 +91,7 @@ class _DetailNasabahState extends State<DetailNasabah> {
                         padding: const EdgeInsets.all(8.0),
                         child: Text("Nama    :", style: TextStyle(fontWeight: FontWeight.bold),),
                       ),
-                      Text("Luluk Mufida", style: TextStyle(fontWeight: FontWeight.bold))
+                      Text(nama_nasabah, style: TextStyle(fontWeight: FontWeight.bold))
                     ],
                   ),
                   Row(
@@ -48,7 +100,7 @@ class _DetailNasabahState extends State<DetailNasabah> {
                         padding: const EdgeInsets.all(8.0),
                         child: Text("Jenis    :", style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
-                      Text("Funding", style: TextStyle(fontWeight: FontWeight.bold))
+                      Text(jenis, style: TextStyle(fontWeight: FontWeight.bold))
                     ],
                   ),
                   Row(
@@ -56,7 +108,7 @@ class _DetailNasabahState extends State<DetailNasabah> {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
-                          "Created at 08:00 PM 09/09/2022",
+                          "Created at " + created_at,
                           style:
                               TextStyle(fontSize: 12, color: MyColors.grey_40),
                         ),
@@ -156,7 +208,7 @@ class _DetailNasabahState extends State<DetailNasabah> {
                                   decoration: InputDecoration(
                                     contentPadding: EdgeInsets.symmetric(horizontal: 10),
                                     border: InputBorder.none,
-                                    hintText: "Hot",
+                                    hintText: status,
                                     hintStyle: MyText.body1(context)!
                                         .copyWith(color: MyColors.grey_40),
                                     focusedBorder: OutlineInputBorder(

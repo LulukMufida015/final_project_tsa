@@ -9,14 +9,15 @@ import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 
-class DaftarNasabah extends StatefulWidget {
-  const DaftarNasabah({Key? key}) : super(key: key);
+class DaftarNasabahStatus extends StatefulWidget {
+  final String status;
+  const DaftarNasabahStatus({Key? key, required this.status}) : super(key: key);
 
   @override
-  State<DaftarNasabah> createState() => _DaftarNasabahState();
+  State<DaftarNasabahStatus> createState() => _DaftarNasabahStatusState();
 }
 
-class _DaftarNasabahState extends State<DaftarNasabah> {
+class _DaftarNasabahStatusState extends State<DaftarNasabahStatus> {
   List _data = [];
   final String _tokenAuth = '';
 
@@ -26,7 +27,7 @@ class _DaftarNasabahState extends State<DaftarNasabah> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     marketing_id = prefs.getInt('idUser');
     try {
-      var url = Uri.parse('https://frontliner.intermediatech.id/api/home/all_assignment?marketing_id=' + marketing_id.toString());
+      var url = Uri.parse('https://frontliner.intermediatech.id/api/home/all_assignment_by_category?marketing_id=' + marketing_id.toString() + '&category=' + widget.status.toString());
       var response = await http.get(
         url,
         headers: {'Authorization': 'Bearer ' + _tokenAuth},
@@ -35,6 +36,7 @@ class _DaftarNasabahState extends State<DaftarNasabah> {
         setState(() {
           _data = json.decode(response.body)['data'];
         });
+        print(_data);
       } else {
         print('error');
       }

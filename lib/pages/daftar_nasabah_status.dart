@@ -2,6 +2,7 @@ import 'package:final_project/pages/detail_nasabah.dart';
 import 'package:final_project/pages/home.dart';
 import 'package:flutter/material.dart';
 import 'package:final_project/data/my_colors.dart';
+import 'package:final_project/pages/camelcase.dart';
 
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -56,13 +57,14 @@ class _DaftarNasabahStatusState extends State<DaftarNasabahStatus> {
     _getAllData();
   }
 
+  
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Daftar Nasabah", style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          "Daftar Nasabah " + widget.status.toCapitalized(), style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(

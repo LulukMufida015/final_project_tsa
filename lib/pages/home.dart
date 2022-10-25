@@ -40,7 +40,8 @@ class HomePageState extends State<HomePage> {
   String jenisNasabah = '';
   String statusNasabah = '';
   String tanggal = '';
-  String photoUser = '';
+  String photoUser =
+      'https://www.generationsforpeace.org/wp-content/uploads/2018/03/empty.jpg';
   var IdNewNasabah;
 
   var UserId;
@@ -51,12 +52,12 @@ class HomePageState extends State<HomePage> {
     UserId = prefs.getInt('idUser');
     nameUser = prefs.getString('nameUser').toString();
     typeUser = prefs.getString('typeUser').toString();
-    photoUser = prefs.getString('photo').toString();
+    photoUser = prefs.getString('photoUser').toString();
     // print(UserId);
     try {
       var url = Uri.parse(
-          'https://frontliner.intermediatech.id/api/home/data?marketing_id=' + 
-      UserId.toString());
+          'https://frontliner.intermediatech.id/api/home/data?marketing_id=' +
+              UserId.toString());
       var response = await http.get(
         url,
         headers: {'Authorization': 'Bearer ' + _tokenAuth},
@@ -133,7 +134,7 @@ class HomePageState extends State<HomePage> {
                     backgroundColor: Colors.white,
                     child: CircleAvatar(
                       radius: 90,
-                      backgroundImage: NetworkImage(photoUser != null ? photoUser : "https://frontliner.intermediatech.id/admin/image/profile/marketing/597008802-photo-marketing.png", scale: 1),
+                      backgroundImage: NetworkImage(photoUser),
                     ),
                   ),
                   Container(
@@ -337,11 +338,12 @@ class HomePageState extends State<HomePage> {
                       child: GestureDetector(
                         onTap: () {
                           Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              DaftarNasabahStatus(status: 'hot',)),
-                                    );
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => DaftarNasabahStatus(
+                                      status: 'hot',
+                                    )),
+                          );
                         },
                         child: Badge(
                           shape: BadgeShape.square,
@@ -412,13 +414,14 @@ class HomePageState extends State<HomePage> {
                     ),
                     Expanded(
                       child: GestureDetector(
-                        onTap:  () {
+                        onTap: () {
                           Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              DaftarNasabahStatus(status: 'warm',)),
-                                    );
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => DaftarNasabahStatus(
+                                      status: 'warm',
+                                    )),
+                          );
                         },
                         child: Badge(
                           shape: BadgeShape.square,
@@ -489,13 +492,14 @@ class HomePageState extends State<HomePage> {
                     ),
                     Expanded(
                       child: GestureDetector(
-                        onTap:  () {
+                        onTap: () {
                           Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              DaftarNasabahStatus(status: 'cold',)),
-                                    );
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => DaftarNasabahStatus(
+                                      status: 'cold',
+                                    )),
+                          );
                         },
                         child: Badge(
                           shape: BadgeShape.square,
@@ -566,13 +570,14 @@ class HomePageState extends State<HomePage> {
                     ),
                     Expanded(
                       child: GestureDetector(
-                        onTap:  () {
+                        onTap: () {
                           Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              DaftarNasabahStatus(status: 'unqualified',)),
-                                    );
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => DaftarNasabahStatus(
+                                      status: 'unqualified',
+                                    )),
+                          );
                         },
                         child: Badge(
                           shape: BadgeShape.square,
@@ -644,13 +649,14 @@ class HomePageState extends State<HomePage> {
                     ),
                     Expanded(
                       child: GestureDetector(
-                        onTap:  () {
+                        onTap: () {
                           Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              DaftarNasabahStatus(status: 'closed',)),
-                                    );
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => DaftarNasabahStatus(
+                                      status: 'closed',
+                                    )),
+                          );
                         },
                         child: Badge(
                           shape: BadgeShape.square,
@@ -907,7 +913,8 @@ class HomePageState extends State<HomePage> {
                                                       context,
                                                       MaterialPageRoute(
                                                           builder: (context) =>
-                                                              DetailNasabah(id: IdNewNasabah)),
+                                                              DetailNasabah(
+                                                                  id: IdNewNasabah)),
                                                     );
                                                   },
                                                 ),
@@ -940,7 +947,7 @@ class HomePageState extends State<HomePage> {
                                     );
                                   },
                                   child: Text(
-                                    "Load More",
+                                    "Lihat Semua",
                                     style: TextStyle(
                                         decoration: TextDecoration.underline,
                                         color: MyColors.primaryDark),

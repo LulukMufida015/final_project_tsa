@@ -1,15 +1,21 @@
 import 'package:final_project/data/my_colors.dart';
+import 'package:final_project/pages/daftar_riwayat.dart';
 import 'package:final_project/widget/my_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/foundation/key.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:date_field/date_field.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
+import 'package:intl/intl.dart';
+import 'package:date_field/date_field.dart';
+
+import 'package:file_picker/file_picker.dart';
 
 class DetailNasabah extends StatefulWidget {
   final int id;
@@ -22,6 +28,9 @@ class DetailNasabah extends StatefulWidget {
 class _DetailNasabahState extends State<DetailNasabah> {
   var _data;
   final String _tokenAuth = '';
+  final TextEditingController _inputTitle = TextEditingController();
+  final TextEditingController _inputCatatan = TextEditingController();
+  final TextEditingController _inputTanggal = TextEditingController();
 
   var marketing_id;
   String nama_nasabah = "";
@@ -29,11 +38,15 @@ class _DetailNasabahState extends State<DetailNasabah> {
   String created_at = "";
   String status = "";
 
+  List itemStatus = [];
+
   Future _getAllData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     marketing_id = prefs.getInt('idUser');
     try {
-      var url = Uri.parse('https://frontliner.intermediatech.id/api/home/assignment?id=' + widget.id.toString());
+      var url = Uri.parse(
+          'https://frontliner.intermediatech.id/api/home/assignment?id=' +
+              widget.id.toString());
       var response = await http.get(
         url,
         headers: {'Authorization': 'Bearer ' + _tokenAuth},
@@ -46,6 +59,8 @@ class _DetailNasabahState extends State<DetailNasabah> {
         jenis = _data['nasabah']['jenis'].toString();
         created_at = _data['nasabah']['created_at'].toString();
         status = _data['nasabah']['status'].toString();
+        itemStatus = _data['status'];
+        print(itemStatus);
       } else {
         print('error');
       }
@@ -58,14 +73,76 @@ class _DetailNasabahState extends State<DetailNasabah> {
     }
   }
 
-   @override
+  Future _postFormData() async {
+    try {
+      Map<String, String> requestBody = <String, String>{
+        'assignment_id': widget.id.toString(),
+        'title': _inputTitle.text,
+        'status': dropdownvalue,
+        'note': _inputCatatan.text,
+        'date_submit': _inputTanggal.text,
+      };
+     
+      Map<String, String> headers = <String, String>{
+        'contentType': 'multipart/form-data',
+        'Authorization': 'Bearer ' + _tokenAuth,
+
+      };
+
+      var request = http.MultipartRequest(
+          'POST',
+          Uri.parse(
+              'https://frontliner.intermediatech.id/api/marketing/add_activity'))
+        ..headers.addAll(headers)
+        ..fields.addAll(requestBody);
+      http.MultipartFile multipartFile =
+          await http.MultipartFile.fromPath('attachment', _path);
+      request.files.add(multipartFile);
+      var response = await request.send();
+      var res = await http.Response.fromStream(response);
+
+      if (res.statusCode == 200) {
+        print('sukses');
+      } else {
+        print('error1');
+      }
+    } on SocketException {
+      print('no internet');
+    } on HttpException {
+      print('error2');
+    } on FormatException {
+      print('error3');
+    }
+  }
+
+  final _formKey = GlobalKey<FormState>();
+  String _path = '';
+  String _filename = '';
+
+  void _onChangeFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'png'],
+    );
+
+    if (result != null) {
+      PlatformFile file = result.files.first;
+      setState(() {
+        _path = file.path.toString();
+        _filename = file.name.toString();
+      });
+    } else {
+      // User canceled the picker
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
     _getAllData();
   }
 
-
-  var items = ["Mangga", "Nangka", "Semangka"];
+  // var items = ["Mangga", "Nangka", "Semangka"];
   String dropdownvalue = "items";
   @override
   Widget build(BuildContext context) {
@@ -78,384 +155,520 @@ class _DetailNasabahState extends State<DetailNasabah> {
             IconButton(icon: Icon(Icons.bookmark_border), onPressed: () {}),
           ]),
       body: SingleChildScrollView(
-          child: Column(
-        children: [
-          Container(
-            child: Padding(
-              padding: const EdgeInsets.all(15),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text("Nama    :", style: TextStyle(fontWeight: FontWeight.bold),),
-                      ),
-                      Text(nama_nasabah, style: TextStyle(fontWeight: FontWeight.bold))
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text("Jenis    :", style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                      Text(jenis, style: TextStyle(fontWeight: FontWeight.bold))
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          "Created at " + created_at,
-                          style:
-                              TextStyle(fontSize: 12, color: MyColors.grey_40),
-                        ),
-                      )
-                    ],
-                  )
-                ],
-              ),
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(color: MyColors.grey_15),
-            width: (MediaQuery.of(context).size.width),
-            // height: 1000,
+          child: Column(children: [
+        Container(
+          child: Padding(
+            padding: const EdgeInsets.all(15),
             child: Column(
               children: [
-                Container(
-                  child: Padding(
-                    padding: const EdgeInsets.all(25),
-                    child: Row(
-                      children: [
-                        Container(
-                            decoration: BoxDecoration(
-                              color: MyColors.primaryDark,
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(10)),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(3.0),
-                              child: Icon(
-                                Icons.whatsapp,
-                                color: MyColors.white,
-                                size: 30,
-                              ),
-                            )),
-                        Container(width: 10),
-                        Container(
-                            decoration: BoxDecoration(
-                              color: MyColors.primaryDark,
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(10)),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(3.0),
-                              child: Icon(
-                                Icons.phone,
-                                color: MyColors.white,
-                                size: 30,
-                              ),
-                            )),
-                        Container(width: 10),
-                        Container(
-                            decoration: BoxDecoration(
-                              color: MyColors.primaryDark,
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(10)),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(3.0),
-                              child: Icon(
-                                Icons.mail,
-                                color: MyColors.white,
-                                size: 30,
-                              ),
-                            )),
-                        Container(width: 10)
-                      ],
+                Row(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        "Nama    :",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
-                  ),
+                    Text(nama_nasabah,
+                        style: TextStyle(fontWeight: FontWeight.bold))
+                  ],
                 ),
-                Align(
-                  alignment: Alignment.topLeft,
-                  child: Form(
-                    child: Column(
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(25),
-                              child: Text(
-                                "Status",
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 25, right: 25),
-                              child: Container(
-                                alignment: Alignment.centerLeft,
-                                // padding: EdgeInsets.symmetric(horizontal: 25),
-                                decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(4))),
-                                child: DropdownButtonFormField(
-                                  decoration: InputDecoration(
-                                    contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                                    border: InputBorder.none,
-                                    hintText: status,
-                                    hintStyle: MyText.body1(context)!
-                                        .copyWith(color: MyColors.grey_40),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(0),
-                                      borderSide: BorderSide(
-                                          color: MyColors.primaryDark,
-                                          width: 2),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(5),
-                                      borderSide: BorderSide(
-                                          color: MyColors.grey_40, width: 1),
-                                    ),
-                                  ),
-                                  // value: dropdownvalue,
-                                  icon: const Icon(Icons.keyboard_arrow_down),
-                                  items: items.map((String items) {
-                                    return DropdownMenuItem(
-                                      value: items,
-                                      child: Text(items),
-                                    );
-                                  }).toList(),
-                                  onChanged: (String? newValue) {
-                                    setState(() {
-                                      dropdownvalue = newValue!;
-                                    });
-                                  },
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(25),
-                              child: Text(
-                                "Kategori",
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 25, right: 25),
-                              child: Container(
-                                height: 45,
-                                decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(4))),
-                                alignment: Alignment.centerLeft,
-                                // padding: EdgeInsets.symmetric(horizontal: 25),
-                                child: TextField(
-                                  maxLines: 1,
-                                  controller: new TextEditingController(),
-                                  decoration: InputDecoration(
-                                    contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                                    border: InputBorder.none,
-                                    hintText: "Hot",
-                                    hintStyle: MyText.body1(context)!
-                                        .copyWith(color: MyColors.grey_40),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(5),
-                                      borderSide: BorderSide(
-                                          color: MyColors.primaryDark, width: 2),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(5),
-                                      borderSide: BorderSide(
-                                          color: MyColors.grey_20, width: 1),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(25),
-                              child: Text(
-                                "Catatan",
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 25, right: 25),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(4))),
-                                child: TextField(
-                                  style: TextStyle(),
-                                  keyboardType: TextInputType.multiline,
-                                  cursorColor: MyColors.primaryDark,
-                                  maxLines: 12,
-                                  minLines: 7,
-                                  decoration: InputDecoration(
-                                    hintText: 'Message',
-                                    hintStyle: MyText.body1(context)!
-                                        .copyWith(color: MyColors.grey_40),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(0),
-                                      borderSide: BorderSide(
-                                          color: MyColors.primaryDark,
-                                          width: 2),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(5),
-                                      borderSide: BorderSide(
-                                          color: MyColors.grey_40, width: 1),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(25),
-                              child: Text(
-                                "Tanggal",
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 25, right: 25),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(4))),
-                                child: DateTimeFormField(
-                                  decoration: const InputDecoration(
-                                    hintStyle: TextStyle(color: Colors.black45),
-                                    errorStyle:
-                                        TextStyle(color: Colors.redAccent),
-                                    border: OutlineInputBorder(),
-                                    suffixIcon: Icon(Icons.event_note),
-                                    labelText: 'Select Date',
-                                  ),
-                                  mode: DateTimeFieldPickerMode.date,
-                                  autovalidateMode: AutovalidateMode.always,
-                                  validator: (e) => (e?.day ?? 0) == 1
-                                      ? 'Please not the first day'
-                                      : null,
-                                  onDateSelected: (DateTime value) {
-                                    print(value);
-                                  },
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(25),
-                              child: Text(
-                                "Dokumen",
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 25),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    child: Expanded(
-                                        child:
-                                            // Text("data"),
-                                            ElevatedButton(
-                                      onPressed: () {},
-                                      style: ElevatedButton.styleFrom(
-                                          primary:
-                                              MyColors.hijau.withOpacity(0.4)),
-                                      child: Text("Unggah Dokumen"),
-                                    )),
-                                  ),
-                                  Container(
-                                    width: 15,
-                                  ),
-                                  Container(
-                                    child: Expanded(
-                                        child:
-                                            // Text("data"),
-                                            ElevatedButton(
-                                      onPressed: () {},
-                                      style: ElevatedButton.styleFrom(
-                                          primary:
-                                              MyColors.hijau.withOpacity(0.4)),
-                                      child: Text("Buka Kamera"),
-                                    )),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 25),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    child: Text('img_oh_sehun,jpg'),
-                                  ),
-                                  Container(
-                                    width: 15,
-                                  ),
-                                  Align(
-                                    alignment: Alignment.topRight,
-                                    child: Icon(Icons.close),
-                                  )
-                                  // Container(
-                                  //   child: Expanded(
-                                  //     child:
-                                  //     // Text("data"),
-                                  //     ElevatedButton(onPressed: () {},
-                                  //     child: Text("data"),
-                                  //     )
-                                  //   ),
-                                  // ),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 25),
-                                child: Container(
-                                  width: (MediaQuery.of(context).size.width),
-                                  child: ElevatedButton(
-                                    onPressed: () {},
-                                    style: ElevatedButton.styleFrom(
-                                        primary: MyColors.primaryDark),
-                                    child: Text("Kirim"),
-                                  ),
-                                ))
-                          ],
-                        ),
-                      ],
+                Row(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text("Jenis    :",
+                          style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
-                  ),
+                    Text(jenis, style: TextStyle(fontWeight: FontWeight.bold))
+                  ],
                 ),
+                Row(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        "Created at " + created_at,
+                        style: TextStyle(fontSize: 12, color: MyColors.grey_40),
+                      ),
+                    )
+                  ],
+                )
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(25),
-            child: Align(
+        ),
+        Container(
+          decoration: BoxDecoration(color: MyColors.grey_15),
+          width: (MediaQuery.of(context).size.width),
+          // height: 1000,
+          child: Column(
+            children: [
+              Container(
+                child: Padding(
+                  padding: const EdgeInsets.all(25),
+                  child: Row(
+                    children: [
+                      Container(
+                          decoration: BoxDecoration(
+                            color: MyColors.primaryDark,
+                            borderRadius: BorderRadius.all(Radius.circular(10)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(3.0),
+                            child: Icon(
+                              Icons.whatsapp,
+                              color: MyColors.white,
+                              size: 30,
+                            ),
+                          )),
+                      Container(width: 10),
+                      Container(
+                          decoration: BoxDecoration(
+                            color: MyColors.primaryDark,
+                            borderRadius: BorderRadius.all(Radius.circular(10)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(3.0),
+                            child: Icon(
+                              Icons.phone,
+                              color: MyColors.white,
+                              size: 30,
+                            ),
+                          )),
+                      Container(width: 10),
+                      Container(
+                          decoration: BoxDecoration(
+                            color: MyColors.primaryDark,
+                            borderRadius: BorderRadius.all(Radius.circular(10)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(3.0),
+                            child: Icon(
+                              Icons.mail,
+                              color: MyColors.white,
+                              size: 30,
+                            ),
+                          )),
+                      Container(width: 10)
+                    ],
+                  ),
+                ),
+              ),
+              Align(
                 alignment: Alignment.topLeft,
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 10, horizontal: 25),
+                            child: Text(
+                              "Judul",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 25, right: 25),
+                            child: Container(
+                              height: 45,
+                              decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(4))),
+                              alignment: Alignment.centerLeft,
+                              // padding: EdgeInsets.symmetric(horizontal: 25),
+                              child: TextFormField(
+                                controller: _inputTitle,
+                                style: TextStyle(),
+                                keyboardType: TextInputType.multiline,
+                                cursorColor: MyColors.primaryDark,
+                                maxLines: 12,
+                                minLines: 7,
+                                decoration: InputDecoration(
+                                  hintText: 'Judul Aktivitas',
+                                  hintStyle: MyText.body1(context)!
+                                      .copyWith(color: MyColors.grey_40),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(0),
+                                    borderSide: BorderSide(
+                                        color: MyColors.primaryDark, width: 2),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(5),
+                                    borderSide: BorderSide(
+                                        color: MyColors.grey_40, width: 1),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 10, horizontal: 25),
+                            child: Text(
+                              "Status",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+
+                          Padding(
+                            padding: const EdgeInsets.only(left: 25, right: 25),
+                            child: Container(
+                              alignment: Alignment.centerLeft,
+                              // padding: EdgeInsets.symmetric(horizontal: 25),
+                              decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(4))),
+                              child: DropdownButtonFormField(
+                                validator: (value) {
+                                  if (value == null) {
+                                    return 'Status tidak boleh kosong';
+                                  }
+                                  return null;
+                                },
+                                decoration: InputDecoration(
+                                  contentPadding:
+                                      EdgeInsets.symmetric(horizontal: 10),
+                                  border: InputBorder.none,
+                                  hintText: status,
+                                  hintStyle: MyText.body1(context)!
+                                      .copyWith(color: MyColors.grey_40),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(5),
+                                    borderSide: BorderSide(
+                                        color: MyColors.primaryDark, width: 2),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(5),
+                                    borderSide: BorderSide(
+                                        color: MyColors.grey_40, width: 1),
+                                  ),
+                                ),
+                                // value: dropdownvalue,
+                                icon: const Icon(Icons.keyboard_arrow_down),
+                                items: itemStatus.map((items) {
+                                  return DropdownMenuItem(
+                                    value: items['id'].toString(),
+                                    child: AutoSizeText(
+                                      items['status'] +
+                                          ' - ' +
+                                          items['kategori'],
+                                      style: TextStyle(fontSize: 15),
+                                      maxLines: 1,
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    dropdownvalue = newValue!;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+
+                          //
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 10, horizontal: 25),
+                            child: Text(
+                              "Catatan",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 25, right: 25),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(4))),
+                              child: TextFormField(
+                                controller: _inputCatatan,
+                                style: TextStyle(),
+                                keyboardType: TextInputType.multiline,
+                                cursorColor: MyColors.primaryDark,
+                                maxLines: 12,
+                                minLines: 7,
+                                decoration: InputDecoration(
+                                  hintText: 'Message',
+                                  hintStyle: MyText.body1(context)!
+                                      .copyWith(color: MyColors.grey_40),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(0),
+                                    borderSide: BorderSide(
+                                        color: MyColors.primaryDark, width: 2),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(5),
+                                    borderSide: BorderSide(
+                                        color: MyColors.grey_40, width: 1),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 10, horizontal: 25),
+                            child: Text(
+                              "Tanggal",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+
+                          Padding(
+                            padding: const EdgeInsets.only(left: 25, right: 25),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(4))),
+                              child: TextFormField(
+                                controller: _inputTanggal,
+                                //editing controller of this TextField
+                                decoration: const InputDecoration(
+                                  hintStyle: TextStyle(color: Colors.black45),
+                                  errorStyle:
+                                      TextStyle(color: Colors.redAccent),
+                                  border: OutlineInputBorder(),
+                                  suffixIcon: Icon(Icons.event_note),
+                                  labelText: 'Select Date',
+                                ),
+                                readOnly: true,
+                                //set it true, so that user will not able to edit text
+                                onTap: () async {
+                                  DateTime? pickedDate = await showDatePicker(
+                                      context: context,
+                                      initialDate: DateTime.now(),
+                                      firstDate: DateTime(1950),
+                                      //DateTime.now() - not to allow to choose before today.
+                                      lastDate: DateTime(2100));
+
+                                  if (pickedDate != null) {
+                                    print(
+                                        pickedDate); //pickedDate output format => 2021-03-10 00:00:00.000
+                                    String formattedDate =
+                                        DateFormat('yyyy-MM-dd')
+                                            .format(pickedDate);
+                                    print(
+                                        formattedDate); //formatted date output using intl package =>  2021-03-16
+                                    setState(() {
+                                      _inputTanggal.text =
+                                          formattedDate; //set output date to TextField value.
+                                    });
+                                  } else {}
+                                },
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: 15,
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 10, horizontal: 25),
+                            child: Text(
+                              "Dokumen",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 25),
+                            child: Row(
+                              children: [
+                                Container(
+                                  // width: (MediaQuery.of(context).size.width),
+                                  child: Expanded(
+                                      child:
+                                          // Text("data"),
+                                          ElevatedButton(
+                                    onPressed: () {
+                                      _onChangeFile();
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                        primary:
+                                            MyColors.hijau.withOpacity(0.4)),
+                                    child: Text("Unggah Dokumen"),
+                                  )),
+                                ),
+                                // Container(
+                                //   width: 15,
+                                // ),
+                                // Container(
+                                //   child: Expanded(
+                                //       child:
+                                //           // Text("data"),
+                                //           ElevatedButton(
+                                //     onPressed: () {},
+                                //     style: ElevatedButton.styleFrom(
+                                //         primary:
+                                //             MyColors.hijau.withOpacity(0.4)),
+                                //     child: Text("Buka Kamera"),
+                                //   )),
+                                // ),
+                              ],
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 25),
+                            child: Container(
+                              child: Text(
+                                _filename,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            // Container(
+                            //   width: 15,
+                            // ),
+                            // Align(
+                            //   alignment: Alignment.topRight,
+                            //   child: Icon(Icons.close),
+                            // )
+                            // Container(
+                            //   child: Expanded(
+                            //     child:
+                            //     // Text("data"),
+                            //     ElevatedButton(onPressed: () {},
+                            //     child: Text("data"),
+                            //     )
+                            //   ),
+                            // ),
+                          ),
+                          Container(
+                            height: 20,
+                          ),
+                          Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 25),
+                              child: Container(
+                                width: (MediaQuery.of(context).size.width),
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    if (_formKey.currentState!.validate()) {
+                                    _postFormData();
+                                  }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                      primary: MyColors.primaryDark),
+                                  child: Text("Kirim"),
+                                ),
+                              ))
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(height: 25,),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 5),
+          child: Align(
+              alignment: Alignment.topLeft,
+              child: Text(
+                "Riwayat",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              )),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Container(
+            height: 110,
+            width: double.infinity,
+            padding: EdgeInsets.fromLTRB(15, 5, 15, 5),
+            child: Column(
+              children: <Widget>[
+                Expanded(
+                  child: Row(
+                    children: <Widget>[
+                      Card(
+                          margin: EdgeInsets.all(0),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          clipBehavior: Clip.antiAliasWithSaveLayer,
+                          child: Image.network(
+                              "https://awsimages.detik.net.id/community/media/visual/2021/11/29/sehun-exo-4_43.png?w=1200",
+                              height: 100,
+                              width: 100,
+                              fit: BoxFit.cover)),
+                      Container(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text("Coba",
+                                maxLines: 3,
+                                style: MyText.subhead(context)!.copyWith(
+                                    color: MyColors.grey_80,
+                                    fontWeight: FontWeight.w500)),
+                            Container(
+                              height: 5,
+                            ),
+                            Text("coba".toUpperCase(),
+                                style: MyText.caption(context)!
+                                    .copyWith(color: MyColors.grey_40)),
+                            Spacer(),
+                            Spacer(),
+                            Row(
+                              children: <Widget>[
+                                Text("coba".toUpperCase(),
+                                    style: MyText.caption(context)!
+                                        .copyWith(color: MyColors.grey_40)),
+                                Spacer(),
+                                Text("coba",
+                                    style: MyText.caption(context)!
+                                        .copyWith(color: MyColors.grey_40)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                Container(height: 10),
+                Divider(height: 0)
+              ],
+            ),
+          ),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(width: 15),
+            Padding(
+              padding: const EdgeInsets.all(15),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => DaftarRiwayat()),
+                  );
+                },
                 child: Text(
-                  "Riwayat",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                )),
-          )
-        ],
-      )),
+                  "Lihat Semua",
+                  style: TextStyle(
+                      decoration: TextDecoration.underline,
+                      color: MyColors.primaryDark),
+                ),
+              ),
+            )
+          ],
+        )
+      ])),
     );
   }
 }

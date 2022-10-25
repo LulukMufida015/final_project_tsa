@@ -29,6 +29,17 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   var UserId;
   var _data;
+  var _message;
+
+  void _showToast(String mesg, BuildContext context) {
+    final scaffold = ScaffoldMessenger.of(context);
+    scaffold.showSnackBar(
+      SnackBar(
+        content: Text(mesg),
+        action: SnackBarAction(label: 'hide', onPressed: scaffold.hideCurrentSnackBar),
+      ),
+    );
+  }
 
   Future _postDataJson() async {
     try {
@@ -41,6 +52,7 @@ class _LoginPageState extends State<LoginPage> {
       });
       setState(() {
         _data = json.decode(response.body)['data'];
+        _message = json.decode(response.body)['message'];
       });
       if (response.statusCode == 200) {
         print(_data['id']);
@@ -53,6 +65,7 @@ class _LoginPageState extends State<LoginPage> {
         );
       } else {
         print('error');
+        return _showToast(_message.toString(), context);
       }
     } on SocketException {
       print('no internet');

@@ -1,4 +1,5 @@
 import 'package:final_project/pages/login.dart';
+import 'package:final_project/pages/master.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/src/foundation/key.dart';
@@ -24,13 +25,18 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   TextEditingController _inputEmail = TextEditingController();
+  TextEditingController _inputPhone = TextEditingController();
+  TextEditingController _inputPassword = TextEditingController();
+  TextEditingController _inputName = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
   List _data = [];
   final String _tokenAuth = '';
   var UserId;
   var nameUser;
   var typeUser;
-  var photoUser;
+  String photoUser =
+      'https://www.generationsforpeace.org/wp-content/uploads/2018/03/empty.jpg';
   var phoneUser;
   var emailUser;
   String phonebaru = '';
@@ -40,21 +46,88 @@ class _ProfilePageState extends State<ProfilePage> {
     UserId = prefs.getInt('idUser');
     nameUser = prefs.getString('nameUser');
     typeUser = prefs.getString('typeUser');
-    photoUser = prefs.getString('photoUser');
+    photoUser = prefs.getString('photoUser').toString();
     phoneUser = prefs.getString('phoneUser');
     emailUser = prefs.getString('emailUser');
     phonebaru = phoneUser.toString();
+    _inputEmail.text = emailUser.toString();
+    _inputName.text = nameUser.toString();
+    _inputPhone.text = phonebaru.toString();
+  }
+
+  LogOut() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    await preferences.clear();
+    return Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+    );
+  }
+
+  Future _postDataJson() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    UserId = prefs.getInt('idUser');
+    try {
+      var url = Uri.parse(
+          'https://frontliner.intermediatech.id/api/marketing/update_profile_data');
+      var response = await http.post(url, headers: {
+        'Authorization': 'Bearer ' + _tokenAuth
+      }, body: {
+        'marketing_id': UserId.toString(),
+        'email': _inputEmail.text,
+        'password': _inputPassword.text,
+        'name': _inputName.text,
+        'phone': _inputPhone.text
+      });
+      setState(() {
+        _data = json.decode(response.body)['data'];
+        postData(_inputName.text, _inputEmail.text, _inputPhone.text);
+        _getAllData();
+      });
+      if (response.statusCode == 200) {
+        print('sukses');
+        _showToast(context, 'Profile berhasil diperbarui');
+      } else {
+        print('error');
+        _showToast(context, 'Profile gagal diperbarui');
+      }
+    } on SocketException {
+      print('no internet');
+    } on HttpException {
+      print('error');
+    } on FormatException {
+      print('error');
+    }
+  }
+
+  void _showToast(BuildContext context, String msg) {
+    final scaffold = ScaffoldMessenger.of(context);
+    scaffold.showSnackBar(
+      SnackBar(
+        content: Text(
+          msg,
+        ),
+        action: SnackBarAction(
+            label: 'hide', onPressed: scaffold.hideCurrentSnackBar),
+      ),
+    );
+  }
+
+  postData(name, email, phone) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('nameUser', name);
+    prefs.setString('emailUser', email);
+    prefs.setString('phoneUser', phone);
   }
 
   @override
   void initState() {
     super.initState();
     _getAllData().whenComplete(() {
-      setState(() {
-        
-      });
+      setState(() {});
     });
   }
+
   bool isSwitched1 = true;
 
   @override
@@ -81,7 +154,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   backgroundColor: Colors.white,
                   child: CircleAvatar(
                     radius: 90,
-                    backgroundImage: AssetImage(photoUser.toString()),
+                    backgroundImage: NetworkImage(photoUser),
                   ),
                 ),
                 Container(
@@ -110,8 +183,53 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           Form(
+            key: _formKey,
             child: Column(
               children: [
+                Align(
+                  alignment: Alignment.topLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                        top: 25, left: 25, right: 25, bottom: 10),
+                    child: Text(
+                      "Nama",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 25, right: 25),
+                  child: Container(
+                    height: 45,
+                    decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.all(Radius.circular(4))),
+                    child: TextFormField(
+                      controller: _inputName,
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return 'Nama tidak boleh kosong';
+                        }
+                        return null;
+                      },
+                      style: TextStyle(color: Colors.black),
+                      decoration: InputDecoration(
+                        contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                        border: InputBorder.none,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide:
+                              BorderSide(color: MyColors.grey_20, width: 1),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide:
+                              BorderSide(color: MyColors.primaryDark, width: 2),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
                 Align(
                   alignment: Alignment.topLeft,
                   child: Padding(
@@ -130,35 +248,27 @@ class _ProfilePageState extends State<ProfilePage> {
                     decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.all(Radius.circular(4))),
-                    alignment: Alignment.centerLeft,
                     child: TextFormField(
-                      // initialValue: nameUser.toString(),
-                      
-                      maxLines: 1,
                       controller: _inputEmail,
                       validator: (value) {
-                              if (value!.isEmpty) {
-                                _inputEmail.text = value;
-                                return 'Email tidak boleh kosong';
-                              }
-                              _inputEmail.text = phonebaru;
-                              return null;
-                            },
+                        if (value!.isEmpty) {
+                          return 'E-mail tidak boleh kosong';
+                        }
+                        return null;
+                      },
+                      style: TextStyle(color: Colors.black),
                       decoration: InputDecoration(
                         contentPadding: EdgeInsets.symmetric(horizontal: 10),
                         border: InputBorder.none,
-                        hintText: emailUser.toString(),
-                        hintStyle: MyText.body1(context)!
-                            .copyWith(color: MyColors.grey_40),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(5),
-                          borderSide:
-                              BorderSide(color: MyColors.primaryDark, width: 2),
-                        ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(5),
                           borderSide:
                               BorderSide(color: MyColors.grey_20, width: 1),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide:
+                              BorderSide(color: MyColors.primaryDark, width: 2),
                         ),
                       ),
                     ),
@@ -182,27 +292,27 @@ class _ProfilePageState extends State<ProfilePage> {
                     decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.all(Radius.circular(4))),
-                    alignment: Alignment.centerLeft,
-                    // padding: EdgeInsets.symmetric(horizontal: 25),
                     child: TextFormField(
-                      // initialValue: phonebaru,
-                      maxLines: 1,
-                      controller: new TextEditingController(),
+                      controller: _inputPhone,
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return 'No Telepon tidak boleh kosong';
+                        }
+                        return null;
+                      },
+                      style: TextStyle(color: Colors.black),
                       decoration: InputDecoration(
                         contentPadding: EdgeInsets.symmetric(horizontal: 10),
                         border: InputBorder.none,
-                        hintText: phonebaru,
-                        hintStyle: MyText.body1(context)!
-                            .copyWith(color: MyColors.grey_40),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(5),
-                          borderSide:
-                              BorderSide(color: MyColors.primaryDark, width: 2),
-                        ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(5),
                           borderSide:
                               BorderSide(color: MyColors.grey_20, width: 1),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide:
+                              BorderSide(color: MyColors.primaryDark, width: 2),
                         ),
                       ),
                     ),
@@ -262,7 +372,11 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Container(
                 width: (MediaQuery.of(context).size.width),
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      _postDataJson();
+                    }
+                  },
                   style:
                       ElevatedButton.styleFrom(primary: MyColors.primaryDark),
                   child: Text("Simpan"),
@@ -277,10 +391,7 @@ class _ProfilePageState extends State<ProfilePage> {
               width: (MediaQuery.of(context).size.width),
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => LoginPage()),
-                  );
+                  LogOut();
                 },
                 style: ElevatedButton.styleFrom(primary: MyColors.white),
                 child: Row(

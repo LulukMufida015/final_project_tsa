@@ -37,6 +37,11 @@ class _DetailNasabahState extends State<DetailNasabah> {
   String jenis = "";
   String created_at = "";
   String status = "";
+  String attachment = "";
+  String title = "";
+  String note = "";
+  String date_submit = "";
+  var riwayat;
 
   List itemStatus = [];
 
@@ -60,6 +65,41 @@ class _DetailNasabahState extends State<DetailNasabah> {
         created_at = _data['nasabah']['created_at'].toString();
         status = _data['nasabah']['status'].toString();
         itemStatus = _data['status'];
+        riwayat = _data['riwayat'];
+        print(itemStatus);
+      } else {
+        print('error');
+      }
+    } on SocketException {
+      print('no internet');
+    } on HttpException {
+      print('error');
+    } on FormatException {
+      print('error');
+    }
+  }
+
+   Future _getBookmark() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    marketing_id = prefs.getInt('idUser');
+    try {
+      var url = Uri.parse(
+          'https://frontliner.intermediatech.id/api/home/assignment?id=' +
+              widget.id.toString());
+      var response = await http.get(
+        url,
+        headers: {'Authorization': 'Bearer ' + _tokenAuth},
+      );
+      if (response.statusCode == 200) {
+        setState(() {
+          _data = json.decode(response.body)['data'];
+        });
+        nama_nasabah = _data['nasabah']['nama_nasabah'].toString();
+        jenis = _data['nasabah']['jenis'].toString();
+        created_at = _data['nasabah']['created_at'].toString();
+        status = _data['nasabah']['status'].toString();
+        itemStatus = _data['status'];
+        riwayat = _data['riwayat'];
         print(itemStatus);
       } else {
         print('error');
@@ -82,11 +122,10 @@ class _DetailNasabahState extends State<DetailNasabah> {
         'note': _inputCatatan.text,
         'date_submit': _inputTanggal.text,
       };
-     
+
       Map<String, String> headers = <String, String>{
         'contentType': 'multipart/form-data',
-        'Authorization': 'Bearer ' + _tokenAuth,
-
+        // 'Authorization': 'Bearer ' + _tokenAuth,
       };
 
       var request = http.MultipartRequest(
@@ -100,7 +139,7 @@ class _DetailNasabahState extends State<DetailNasabah> {
       request.files.add(multipartFile);
       var response = await request.send();
       var res = await http.Response.fromStream(response);
-
+      print(requestBody);
       if (res.statusCode == 200) {
         print('sukses');
       } else {
@@ -143,7 +182,7 @@ class _DetailNasabahState extends State<DetailNasabah> {
   }
 
   // var items = ["Mangga", "Nangka", "Semangka"];
-  String dropdownvalue = "items";
+  String dropdownvalue = '';
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -151,7 +190,7 @@ class _DetailNasabahState extends State<DetailNasabah> {
           title: Text("Detail Nasabah",
               style: TextStyle(fontWeight: FontWeight.bold)),
           actions: <Widget>[
-            IconButton(icon: Icon(Icons.share), onPressed: () {}),
+            // IconButton(icon: Icon(Icons.share), onPressed: () {}),
             IconButton(icon: Icon(Icons.bookmark_border), onPressed: () {}),
           ]),
       body: SingleChildScrollView(
@@ -189,7 +228,7 @@ class _DetailNasabahState extends State<DetailNasabah> {
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
-                        "Created at " + created_at,
+                        created_at,
                         style: TextStyle(fontSize: 12, color: MyColors.grey_40),
                       ),
                     )
@@ -207,7 +246,7 @@ class _DetailNasabahState extends State<DetailNasabah> {
             children: [
               Container(
                 child: Padding(
-                  padding: const EdgeInsets.all(25),
+                  padding: const EdgeInsets.symmetric(horizontal:25, vertical: 15),
                   child: Row(
                     children: [
                       Container(
@@ -276,26 +315,27 @@ class _DetailNasabahState extends State<DetailNasabah> {
                           Padding(
                             padding: const EdgeInsets.only(left: 25, right: 25),
                             child: Container(
-                              height: 45,
                               decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius:
                                       BorderRadius.all(Radius.circular(4))),
-                              alignment: Alignment.centerLeft,
-                              // padding: EdgeInsets.symmetric(horizontal: 25),
                               child: TextFormField(
                                 controller: _inputTitle,
+                                validator: (value) {
+                                if (value!.isEmpty) {
+                                  return 'Judul tidak boleh kosong';
+                                }
+                                return null;
+                              },
                                 style: TextStyle(),
-                                keyboardType: TextInputType.multiline,
+                                keyboardType: TextInputType.text,
                                 cursorColor: MyColors.primaryDark,
-                                maxLines: 12,
-                                minLines: 7,
                                 decoration: InputDecoration(
                                   hintText: 'Judul Aktivitas',
                                   hintStyle: MyText.body1(context)!
                                       .copyWith(color: MyColors.grey_40),
                                   focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(0),
+                                    borderRadius: BorderRadius.circular(5),
                                     borderSide: BorderSide(
                                         color: MyColors.primaryDark, width: 2),
                                   ),
@@ -374,8 +414,6 @@ class _DetailNasabahState extends State<DetailNasabah> {
                               ),
                             ),
                           ),
-
-                          //
                           Padding(
                             padding: const EdgeInsets.symmetric(
                                 vertical: 10, horizontal: 25),
@@ -393,17 +431,23 @@ class _DetailNasabahState extends State<DetailNasabah> {
                                       BorderRadius.all(Radius.circular(4))),
                               child: TextFormField(
                                 controller: _inputCatatan,
+                                validator: (value) {
+                                if (value!.isEmpty) {
+                                  return 'Catatan tidak boleh kosong';
+                                }
+                                return null;
+                              },
                                 style: TextStyle(),
                                 keyboardType: TextInputType.multiline,
                                 cursorColor: MyColors.primaryDark,
                                 maxLines: 12,
                                 minLines: 7,
                                 decoration: InputDecoration(
-                                  hintText: 'Message',
+                                  hintText: 'Pesan',
                                   hintStyle: MyText.body1(context)!
                                       .copyWith(color: MyColors.grey_40),
                                   focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(0),
+                                    borderRadius: BorderRadius.circular(5),
                                     borderSide: BorderSide(
                                         color: MyColors.primaryDark, width: 2),
                                   ),
@@ -434,6 +478,12 @@ class _DetailNasabahState extends State<DetailNasabah> {
                                       BorderRadius.all(Radius.circular(4))),
                               child: TextFormField(
                                 controller: _inputTanggal,
+                                validator: (value) {
+                                if (value!.isEmpty) {
+                                  return 'Tanggal tidak boleh kosong';
+                                }
+                                return null;
+                              },
                                 //editing controller of this TextField
                                 decoration: const InputDecoration(
                                   hintStyle: TextStyle(color: Colors.black45),
@@ -457,7 +507,7 @@ class _DetailNasabahState extends State<DetailNasabah> {
                                     print(
                                         pickedDate); //pickedDate output format => 2021-03-10 00:00:00.000
                                     String formattedDate =
-                                        DateFormat('yyyy-MM-dd')
+                                        DateFormat('MM/dd/yyyy')
                                             .format(pickedDate);
                                     print(
                                         formattedDate); //formatted date output using intl package =>  2021-03-16
@@ -544,7 +594,7 @@ class _DetailNasabahState extends State<DetailNasabah> {
                             // ),
                           ),
                           Container(
-                            height: 20,
+                            height: 15,
                           ),
                           Padding(
                               padding:
@@ -554,8 +604,8 @@ class _DetailNasabahState extends State<DetailNasabah> {
                                 child: ElevatedButton(
                                   onPressed: () {
                                     if (_formKey.currentState!.validate()) {
-                                    _postFormData();
-                                  }
+                                      _postFormData();
+                                    }
                                   },
                                   style: ElevatedButton.styleFrom(
                                       primary: MyColors.primaryDark),
@@ -571,7 +621,9 @@ class _DetailNasabahState extends State<DetailNasabah> {
             ],
           ),
         ),
-        Container(height: 25,),
+        Container(
+          height: 10,
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 5),
           child: Align(
@@ -581,93 +633,113 @@ class _DetailNasabahState extends State<DetailNasabah> {
                 style: TextStyle(fontWeight: FontWeight.bold),
               )),
         ),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Container(
-            height: 110,
-            width: double.infinity,
-            padding: EdgeInsets.fromLTRB(15, 5, 15, 5),
-            child: Column(
-              children: <Widget>[
-                Expanded(
-                  child: Row(
-                    children: <Widget>[
-                      Card(
-                          margin: EdgeInsets.all(0),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          clipBehavior: Clip.antiAliasWithSaveLayer,
-                          child: Image.network(
-                              "https://awsimages.detik.net.id/community/media/visual/2021/11/29/sehun-exo-4_43.png?w=1200",
-                              height: 100,
-                              width: 100,
-                              fit: BoxFit.cover)),
-                      Container(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text("Coba",
-                                maxLines: 3,
-                                style: MyText.subhead(context)!.copyWith(
-                                    color: MyColors.grey_80,
-                                    fontWeight: FontWeight.w500)),
-                            Container(
-                              height: 5,
-                            ),
-                            Text("coba".toUpperCase(),
-                                style: MyText.caption(context)!
-                                    .copyWith(color: MyColors.grey_40)),
-                            Spacer(),
-                            Spacer(),
-                            Row(
+        (riwayat != null
+            ? Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Container(
+                      height: 110,
+                      width: double.infinity,
+                      padding: EdgeInsets.fromLTRB(15, 5, 15, 5),
+                      child: Column(
+                        children: <Widget>[
+                          Expanded(
+                            child: Row(
                               children: <Widget>[
-                                Text("coba".toUpperCase(),
-                                    style: MyText.caption(context)!
-                                        .copyWith(color: MyColors.grey_40)),
-                                Spacer(),
-                                Text("coba",
-                                    style: MyText.caption(context)!
-                                        .copyWith(color: MyColors.grey_40)),
+                                Card(
+                                    margin: EdgeInsets.all(0),
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    clipBehavior: Clip.antiAliasWithSaveLayer,
+                                    child: Image.network(
+                                        riwayat['attachment'].toString(),
+                                        height: 100,
+                                        width: 100,
+                                        fit: BoxFit.cover)),
+                                Container(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: <Widget>[
+                                      Text(riwayat['title'].toString().toUpperCase(),
+                                          maxLines: 3,
+                                          style: MyText.subhead(context)!
+                                              .copyWith(
+                                                  color: MyColors.grey_80,
+                                                  fontWeight: FontWeight.w500)),
+                                      Container(
+                                        height: 5,
+                                      ),
+                                      Text(riwayat['note'].toString(),
+                                          style: MyText.caption(context)!
+                                              .copyWith(
+                                                  color: MyColors.grey_40)),
+                                      Spacer(),
+                                      Spacer(),
+                                      Row(
+                                        children: <Widget>[
+                                          Text(riwayat['status'].toString().toUpperCase(),
+                                              style: MyText.caption(context)!
+                                                  .copyWith(
+                                                      color: MyColors.grey_40)),
+                                          Spacer(),
+                                          Text(riwayat['tanggal'].toString(),
+                                              style: MyText.caption(context)!
+                                                  .copyWith(
+                                                      color: MyColors.grey_40)),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                )
                               ],
                             ),
-                          ],
+                          ),
+                          Container(height: 10),
+                          Divider(height: 0)
+                        ],
+                      ),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(width: 15),
+                      Padding(
+                        padding: const EdgeInsets.all(15),
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => DaftarRiwayat(id: widget.id)),
+                            );
+                          },
+                          child: Text(
+                            "Lihat Semua",
+                            style: TextStyle(
+                                decoration: TextDecoration.underline,
+                                color: MyColors.primaryDark),
+                          ),
                         ),
                       )
                     ],
+                  )
+                ],
+              )
+            : Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(15),
+                  child: Text(
+                    'Daftar Riwayat Belum Tersedia',
+                    style: TextStyle(color: MyColors.grey_60),
                   ),
                 ),
-                Container(height: 10),
-                Divider(height: 0)
-              ],
-            ),
-          ),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(width: 15),
-            Padding(
-              padding: const EdgeInsets.all(15),
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => DaftarRiwayat()),
-                  );
-                },
-                child: Text(
-                  "Lihat Semua",
-                  style: TextStyle(
-                      decoration: TextDecoration.underline,
-                      color: MyColors.primaryDark),
-                ),
-              ),
-            )
-          ],
-        )
+              ))
       ])),
     );
   }

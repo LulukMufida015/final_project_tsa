@@ -150,7 +150,7 @@ class _DaftarNasabahStatusState extends State<DaftarNasabahStatus> {
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: Text(
-                                      "Created at " + _data[index]['created_at'],
+                                      _data[index]['created_at'],
                                       style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,

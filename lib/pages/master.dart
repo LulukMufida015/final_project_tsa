@@ -1,6 +1,8 @@
 import 'package:final_project/pages/cobaupload.dart';
 import 'package:final_project/pages/daftar_nasabah.dart';
+import 'package:final_project/pages/daftar_riwayat.dart';
 import 'package:final_project/pages/profile.dart';
+import 'package:final_project/pages/ubah_password.dart';
 import 'package:flutter/material.dart';
 import 'package:final_project/pages/home.dart';
 import 'package:final_project/data/my_colors.dart';
@@ -18,7 +20,7 @@ class _MyMasterState extends State<MyMaster> {
       TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
   static const List<Widget> _widgetOptions = <Widget>[
     HomePage(),
-    FormPage(),
+    HomePage(),
     ProfilePage(),
   ];
 

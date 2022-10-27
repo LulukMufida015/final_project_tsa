@@ -1,5 +1,6 @@
 import 'package:final_project/pages/login.dart';
 import 'package:final_project/pages/master.dart';
+import 'package:final_project/pages/ubah_password.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/src/foundation/key.dart';
@@ -234,7 +235,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   alignment: Alignment.topLeft,
                   child: Padding(
                     padding: const EdgeInsets.only(
-                        top: 25, left: 25, right: 25, bottom: 10),
+                        top: 10, left: 25, right: 25, bottom: 10),
                     child: Text(
                       "Email",
                       style: TextStyle(fontWeight: FontWeight.bold),
@@ -318,48 +319,29 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                 ),
-                Align(
-                  alignment: Alignment.topLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                        top: 10, left: 25, right: 25, bottom: 10),
-                    child: Text(
-                      "Ubah Password",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 25, right: 25),
-                  child: Container(
-                    height: 45,
-                    decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.all(Radius.circular(4))),
-                    alignment: Alignment.centerLeft,
-                    // padding: EdgeInsets.symmetric(horizontal: 25),
-                    child: TextFormField(
-                      maxLines: 1,
-                      controller: new TextEditingController(),
-                      decoration: InputDecoration(
-                        contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                        border: InputBorder.none,
-                        hintText: "",
-                        hintStyle: MyText.body1(context)!
-                            .copyWith(color: MyColors.grey_40),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(5),
-                          borderSide:
-                              BorderSide(color: MyColors.primaryDark, width: 2),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(5),
-                          borderSide:
-                              BorderSide(color: MyColors.grey_20, width: 1),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(width: 15),
+                    Padding(
+                      padding: const EdgeInsets.all(15),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => UbahPassword()),
+                          );
+                        },
+                        child: Text(
+                          "Ubah Password",
+                          style: TextStyle(
+                              decoration: TextDecoration.underline,
+                              color: MyColors.primaryDark),
                         ),
                       ),
-                    ),
-                  ),
+                    )
+                  ],
                 ),
               ],
             ),

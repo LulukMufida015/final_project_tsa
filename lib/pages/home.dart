@@ -1,8 +1,8 @@
-import 'package:final_project/pages/daftar_nasabah.dart';
-import 'package:final_project/pages/detail_nasabah.dart';
-import 'package:final_project/pages/daftar_nasabah_status.dart';
+import 'package:final_project/pages/nasabah/daftar_semua_nasabah.dart';
+import 'package:final_project/pages/nasabah/detail_nasabah.dart';
+import 'package:final_project/pages/nasabah/daftar_nasabah_status.dart';
 import 'package:final_project/pages/home.dart';
-import 'package:final_project/pages/profile.dart';
+import 'package:final_project/pages/auth/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:final_project/data/img.dart';
@@ -109,13 +109,14 @@ class HomePageState extends State<HomePage> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text("Home", style: TextStyle(fontWeight: FontWeight.bold)),
-        leading: IconButton(
-          icon: Icon(Icons.menu),
-          color: MyColors.grey_100_,
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
+        automaticallyImplyLeading: false,
+        // leading: IconButton(
+        //   icon: Icon(Icons.menu),
+        //   color: MyColors.grey_100_,
+        //   onPressed: () {
+        //     Navigator.pop(context);
+        //   },
+        // ),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -130,7 +131,7 @@ class HomePageState extends State<HomePage> {
                     height: 15,
                   ),
                   CircleAvatar(
-                    radius: 65,
+                    radius: 75,
                     backgroundColor: Colors.white,
                     child: CircleAvatar(
                       radius: 90,
@@ -168,7 +169,7 @@ class HomePageState extends State<HomePage> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(height: 30),
+                    Container(height: 15),
                     Padding(
                       padding: const EdgeInsets.only(left: 15),
                       child: Text("Statistik",
@@ -316,7 +317,7 @@ class HomePageState extends State<HomePage> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(height: 30),
+                    Container(height: 15),
                     Padding(
                       padding: const EdgeInsets.only(left: 15),
                       child: Text("Status Progress",
@@ -733,7 +734,7 @@ class HomePageState extends State<HomePage> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(height: 30),
+                    Container(height: 15),
                     Padding(
                       padding: const EdgeInsets.only(left: 15),
                       child: Text("Nasabah Terbaru",

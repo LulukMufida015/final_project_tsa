@@ -1,6 +1,7 @@
-import 'package:final_project/pages/login.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:final_project/pages/auth//login.dart';
 import 'package:final_project/pages/master.dart';
-import 'package:final_project/pages/ubah_password.dart';
+import 'package:final_project/pages/auth/ubah_password.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/src/foundation/key.dart';
@@ -10,12 +11,13 @@ import 'package:final_project/data/my_colors.dart';
 import 'package:final_project/data/my_strings.dart';
 import 'package:final_project/widget/my_text.dart';
 import 'package:badges/badges.dart';
-import 'package:final_project/pages/daftar_nasabah.dart';
+import 'package:final_project/pages/nasabah/daftar_semua_nasabah.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
+import 'package:intl/intl.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -42,6 +44,8 @@ class _ProfilePageState extends State<ProfilePage> {
   var emailUser;
   String phonebaru = '';
 
+  var marketing_id;
+
   Future _getAllData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     UserId = prefs.getInt('idUser');
@@ -65,41 +69,41 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Future _postDataJson() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    UserId = prefs.getInt('idUser');
-    try {
-      var url = Uri.parse(
-          'https://frontliner.intermediatech.id/api/marketing/update_profile_data');
-      var response = await http.post(url, headers: {
-        'Authorization': 'Bearer ' + _tokenAuth
-      }, body: {
-        'marketing_id': UserId.toString(),
-        'email': _inputEmail.text,
-        'password': _inputPassword.text,
-        'name': _inputName.text,
-        'phone': _inputPhone.text
-      });
-      setState(() {
-        _data = json.decode(response.body)['data'];
-        postData(_inputName.text, _inputEmail.text, _inputPhone.text);
-        _getAllData();
-      });
-      if (response.statusCode == 200) {
-        print('sukses');
-        _showToast(context, 'Profile berhasil diperbarui');
-      } else {
-        print('error');
-        _showToast(context, 'Profile gagal diperbarui');
-      }
-    } on SocketException {
-      print('no internet');
-    } on HttpException {
-      print('error');
-    } on FormatException {
-      print('error');
-    }
-  }
+  // Future _postDataJson() async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   UserId = prefs.getInt('idUser');
+  //   try {
+  //     var url = Uri.parse(
+  //         'https://frontliner.intermediatech.id/api/marketing/update_profile_data');
+  //     var response = await http.post(url, headers: {
+  //       'Authorization': 'Bearer ' + _tokenAuth
+  //     }, body: {
+  //       'marketing_id': UserId.toString(),
+  //       'email': _inputEmail.text,
+  //       'password': _inputPassword.text,
+  //       'name': _inputName.text,
+  //       'phone': _inputPhone.text
+  //     });
+  //     setState(() {
+  //       _data = json.decode(response.body)['data'];
+  //       postData(_inputName.text, _inputEmail.text, _inputPhone.text);
+  //       _getAllData();
+  //     });
+  //     if (response.statusCode == 200) {
+  //       print('sukses');
+  //       _showToast(context, 'Profile berhasil diperbarui');
+  //     } else {
+  //       print('error');
+  //       _showToast(context, 'Profile gagal diperbarui');
+  //     }
+  //   } on SocketException {
+  //     print('no internet');
+  //   } on HttpException {
+  //     print('error');
+  //   } on FormatException {
+  //     print('error');
+  //   }
+  // }
 
   void _showToast(BuildContext context, String msg) {
     final scaffold = ScaffoldMessenger.of(context);
@@ -114,11 +118,83 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  postData(name, email, phone) async {
+  postData(name, email, phone, photo) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString('nameUser', name);
     prefs.setString('emailUser', email);
     prefs.setString('phoneUser', phone);
+    prefs.setString('photoUser', photo);
+  }
+
+  String _path = '';
+  String _filename = '';
+
+  void _onChangeFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'png'],
+    );
+
+    if (result != null) {
+      PlatformFile file = result.files.first;
+      setState(() {
+        _path = file.path.toString();
+        _filename = file.name.toString();
+      });
+    } else {
+      // User canceled the picker
+    }
+  }
+
+  Future _postFormData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    marketing_id = prefs.getInt('idUser');
+    try {
+      Map<String, String> requestBody = <String, String>{
+        'marketing_id': UserId.toString(),
+        'email': _inputEmail.text,
+        'password': _inputPassword.text,
+        'name': _inputName.text,
+        'phone': _inputPhone.text,
+      };
+
+      Map<String, String> headers = <String, String>{
+        'contentType': 'multipart/form-data',
+        // 'Authorization': 'Bearer ' + _tokenAuth,
+      };
+
+      var request = http.MultipartRequest(
+          'POST',
+          Uri.parse(
+              'https://frontliner.intermediatech.id/api/marketing/update_profile_data'))
+        ..headers.addAll(headers)
+        ..fields.addAll(requestBody);
+      http.MultipartFile multipartFile =
+          await http.MultipartFile.fromPath('photo', _path);
+      request.files.add(multipartFile);
+      var response = await request.send();
+      var res = await http.Response.fromStream(response);
+      
+      
+      if (res.statusCode == 200) {    
+        var data = json.decode(res.body)['data'];
+        postData(data['name'].toString(), data['email'], data['phone'], data['photo']);
+          
+        print('sukses');
+       _getAllData().whenComplete((){setState(() {
+         
+       });});
+        
+      } else {
+        print('error1');
+      }
+    } on SocketException {
+      print('no internet');
+    } on HttpException {
+      print('error2');
+    } on FormatException {
+      print('error3');
+    }
   }
 
   @override
@@ -150,13 +226,50 @@ class _ProfilePageState extends State<ProfilePage> {
                 Container(
                   height: 15,
                 ),
-                CircleAvatar(
-                  radius: 65,
-                  backgroundColor: Colors.white,
-                  child: CircleAvatar(
-                    radius: 90,
-                    backgroundImage: NetworkImage(photoUser),
-                  ),
+                Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 75,
+                      backgroundColor: Colors.grey.shade200,
+                      child: CircleAvatar(
+                        radius: 75,
+                        backgroundImage:
+                            NetworkImage(photoUser),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 1,
+                      right: 1,
+                      child: Container(
+                        child: Padding(
+                          padding: const EdgeInsets.all(2.0),
+                          child: GestureDetector(
+                            onTap: _onChangeFile,
+                            child: Icon(Icons.add_a_photo, color: Colors.black)),
+                        ),
+                        decoration: BoxDecoration(
+                            border: Border.all(
+                              width: 3,
+                              color: Colors.white,
+                            ),
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(
+                                50,
+                              ),
+                            ),
+                            color: Colors.white,
+                            boxShadow: [
+                              BoxShadow(
+                                offset: Offset(2, 4),
+                                color: Colors.black.withOpacity(
+                                  0.3,
+                                ),
+                                blurRadius: 3,
+                              ),
+                            ]),
+                      ),
+                    ),
+                  ],
                 ),
                 Container(
                   height: 15,
@@ -356,7 +469,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: ElevatedButton(
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
-                      _postDataJson();
+                      _postFormData();
                     }
                   },
                   style:

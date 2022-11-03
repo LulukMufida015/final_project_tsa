@@ -114,12 +114,12 @@ class _DaftarRiwayatState extends State<DaftarRiwayat> {
                                           Text( _data[index]['status'].toUpperCase(),
                                               style: MyText.caption(context)!
                                                   .copyWith(
-                                                      color: MyColors.grey_40)),
+                                                      color: MyColors.grey_40, fontSize: 9),),
                                           Spacer(),
                                           Text( _data[index]['tanggal'],
                                               style: MyText.caption(context)!
                                                   .copyWith(
-                                                      color: MyColors.grey_40)),
+                                                      color: MyColors.grey_40, fontSize: 9)),
                                         ],
                                       ),
                                     ],

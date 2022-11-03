@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:final_project/pages/login.dart';
+import 'package:final_project/pages/auth/login.dart';
 import 'package:final_project/pages/splashscreen.dart';
 import 'package:final_project/data/my_colors.dart';
 

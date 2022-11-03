@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:final_project/pages/login.dart';
+import 'package:final_project/pages/auth/login.dart';
 
 class AnimatedLogo extends AnimatedWidget {
   const AnimatedLogo({super.key, required Animation<double> animation})

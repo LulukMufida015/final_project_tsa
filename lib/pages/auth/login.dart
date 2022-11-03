@@ -1,13 +1,8 @@
-import 'package:final_project/pages/detail_nasabah.dart';
 import 'package:final_project/pages/master.dart';
-import 'package:final_project/pages/profile.dart';
 import 'package:flutter/material.dart';
-import 'package:final_project/data/img.dart';
 import 'package:final_project/data/my_colors.dart';
 import 'package:final_project/pages/home.dart';
-// import 'package:final_project/pages/coba.dart';
 import 'package:final_project/widget/my_text.dart';
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -178,7 +173,7 @@ class _LoginPageState extends State<LoginPage> {
                               }
                               return null;
                             },
-                            keyboardType: TextInputType.text,
+                            keyboardType: TextInputType.emailAddress,
                             style: TextStyle(color: Colors.black),
                             decoration: InputDecoration(
                               labelText: "Email",

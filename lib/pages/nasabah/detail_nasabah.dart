@@ -1,5 +1,5 @@
 import 'package:final_project/data/my_colors.dart';
-import 'package:final_project/pages/daftar_riwayat.dart';
+import 'package:final_project/pages/nasabah/daftar_riwayat.dart';
 import 'package:final_project/widget/my_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/foundation/key.dart';
@@ -16,6 +16,8 @@ import 'package:intl/intl.dart';
 import 'package:date_field/date_field.dart';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DetailNasabah extends StatefulWidget {
   final int id;
@@ -41,9 +43,26 @@ class _DetailNasabahState extends State<DetailNasabah> {
   String title = "";
   String note = "";
   String date_submit = "";
+  var phone;
+  var whatsapp;
+  var email;
   var riwayat;
+  var _message;
 
   List itemStatus = [];
+
+  var bookmarkAction;
+
+  void _showToast(String mesg, BuildContext context) {
+    final scaffold = ScaffoldMessenger.of(context);
+    scaffold.showSnackBar(
+      SnackBar(
+        content: Text(mesg),
+        action: SnackBarAction(
+            label: 'hide', onPressed: scaffold.hideCurrentSnackBar),
+      ),
+    );
+  }
 
   Future _getAllData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -66,6 +85,10 @@ class _DetailNasabahState extends State<DetailNasabah> {
         status = _data['nasabah']['status'].toString();
         itemStatus = _data['status'];
         riwayat = _data['riwayat'];
+        bookmarkAction = _data['nasabah']['bookmark'];
+        phone = _data['nasabah']['phone'].toString();
+        whatsapp = _data['nasabah']['whatsapp'];
+        email = _data['nasabah']['email'];
         print(itemStatus);
       } else {
         print('error');
@@ -79,28 +102,28 @@ class _DetailNasabahState extends State<DetailNasabah> {
     }
   }
 
-   Future _getBookmark() async {
+  Future _getBookmark(String status) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     marketing_id = prefs.getInt('idUser');
     try {
       var url = Uri.parse(
-          'https://frontliner.intermediatech.id/api/home/assignment?id=' +
-              widget.id.toString());
+          'https://frontliner.intermediatech.id/api/marketing/bookmar_unbookmark_assignment?action=' +
+              status +
+              '&assignment_id=' +
+              widget.id.toString() +
+              '&marketing_id=' +
+              marketing_id.toString());
       var response = await http.get(
         url,
         headers: {'Authorization': 'Bearer ' + _tokenAuth},
       );
       if (response.statusCode == 200) {
         setState(() {
-          _data = json.decode(response.body)['data'];
+          _message = json.decode(response.body)['message'];
+         _showToast(_message.toString(), context);
         });
-        nama_nasabah = _data['nasabah']['nama_nasabah'].toString();
-        jenis = _data['nasabah']['jenis'].toString();
-        created_at = _data['nasabah']['created_at'].toString();
-        status = _data['nasabah']['status'].toString();
-        itemStatus = _data['status'];
-        riwayat = _data['riwayat'];
-        print(itemStatus);
+        print(status);
+        print('sukses');
       } else {
         print('error');
       }
@@ -141,7 +164,9 @@ class _DetailNasabahState extends State<DetailNasabah> {
       var res = await http.Response.fromStream(response);
       print(requestBody);
       if (res.statusCode == 200) {
+        _message = json.decode(res.body)['message'];
         print('sukses');
+        _showToast(_message.toString(), context); 
       } else {
         print('error1');
       }
@@ -175,10 +200,33 @@ class _DetailNasabahState extends State<DetailNasabah> {
     }
   }
 
+  _callNumber() async {
+    //set the number here
+    bool? res = await FlutterPhoneDirectCaller.callNumber(phone);
+  }
+
+  _launchURLWA() async {
+    if (await canLaunch(whatsapp)) {
+      await launch(whatsapp);
+    } else {
+      throw 'Could not launch' + whatsapp;
+    }
+  }
+
+  _launchURLEmail() async {
+    if (await canLaunch(email)) {
+      await launch(email);
+    } else {
+      throw 'Could not launch' + email;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    _getAllData();
+    _getAllData().whenComplete(() {
+      setState(() {});
+    });
   }
 
   // var items = ["Mangga", "Nangka", "Semangka"];
@@ -191,7 +239,24 @@ class _DetailNasabahState extends State<DetailNasabah> {
               style: TextStyle(fontWeight: FontWeight.bold)),
           actions: <Widget>[
             // IconButton(icon: Icon(Icons.share), onPressed: () {}),
-            IconButton(icon: Icon(Icons.bookmark_border), onPressed: () {}),
+            bookmarkAction == false
+                ? IconButton(
+                    icon: Icon(Icons.bookmark_border),
+                    onPressed: () {
+                      _getBookmark('bookmark');
+                      setState(() {
+                        bookmarkAction = !bookmarkAction;
+                      });
+                    })
+                : IconButton(
+                    icon: Icon(Icons.bookmark),
+                    onPressed: () {
+                      _getBookmark('unbookmark');
+                      setState(() {
+                        bookmarkAction = !bookmarkAction;
+                      });
+                    }),
+            //  IconButton(icon: Icon(bookmarkAction == false  ? Icons.bookmark_border : Icons.bookmark ), onPressed: () {_getBookmark('false');}) ,
           ]),
       body: SingleChildScrollView(
           child: Column(children: [
@@ -246,7 +311,8 @@ class _DetailNasabahState extends State<DetailNasabah> {
             children: [
               Container(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal:25, vertical: 15),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
                   child: Row(
                     children: [
                       Container(
@@ -254,12 +320,15 @@ class _DetailNasabahState extends State<DetailNasabah> {
                             color: MyColors.primaryDark,
                             borderRadius: BorderRadius.all(Radius.circular(10)),
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(3.0),
-                            child: Icon(
-                              Icons.whatsapp,
-                              color: MyColors.white,
-                              size: 30,
+                          child: GestureDetector(
+                            onTap: _launchURLWA,
+                            child: Padding(
+                              padding: const EdgeInsets.all(3.0),
+                              child: Icon(
+                                Icons.whatsapp,
+                                color: MyColors.white,
+                                size: 30,
+                              ),
                             ),
                           )),
                       Container(width: 10),
@@ -268,12 +337,15 @@ class _DetailNasabahState extends State<DetailNasabah> {
                             color: MyColors.primaryDark,
                             borderRadius: BorderRadius.all(Radius.circular(10)),
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(3.0),
-                            child: Icon(
-                              Icons.phone,
-                              color: MyColors.white,
-                              size: 30,
+                          child: GestureDetector(
+                            onTap: _callNumber,
+                            child: Padding(
+                              padding: const EdgeInsets.all(3.0),
+                              child: Icon(
+                                Icons.phone,
+                                color: MyColors.white,
+                                size: 30,
+                              ),
                             ),
                           )),
                       Container(width: 10),
@@ -282,12 +354,15 @@ class _DetailNasabahState extends State<DetailNasabah> {
                             color: MyColors.primaryDark,
                             borderRadius: BorderRadius.all(Radius.circular(10)),
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(3.0),
-                            child: Icon(
-                              Icons.mail,
-                              color: MyColors.white,
-                              size: 30,
+                          child: GestureDetector(
+                            onTap: _launchURLEmail,
+                            child: Padding(
+                              padding: const EdgeInsets.all(3.0),
+                              child: Icon(
+                                Icons.mail,
+                                color: MyColors.white,
+                                size: 30,
+                              ),
                             ),
                           )),
                       Container(width: 10)
@@ -322,11 +397,11 @@ class _DetailNasabahState extends State<DetailNasabah> {
                               child: TextFormField(
                                 controller: _inputTitle,
                                 validator: (value) {
-                                if (value!.isEmpty) {
-                                  return 'Judul tidak boleh kosong';
-                                }
-                                return null;
-                              },
+                                  if (value!.isEmpty) {
+                                    return 'Judul tidak boleh kosong';
+                                  }
+                                  return null;
+                                },
                                 style: TextStyle(),
                                 keyboardType: TextInputType.text,
                                 cursorColor: MyColors.primaryDark,
@@ -348,7 +423,6 @@ class _DetailNasabahState extends State<DetailNasabah> {
                               ),
                             ),
                           ),
-
                           Padding(
                             padding: const EdgeInsets.symmetric(
                                 vertical: 10, horizontal: 25),
@@ -357,7 +431,6 @@ class _DetailNasabahState extends State<DetailNasabah> {
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
-
                           Padding(
                             padding: const EdgeInsets.only(left: 25, right: 25),
                             child: Container(
@@ -432,11 +505,11 @@ class _DetailNasabahState extends State<DetailNasabah> {
                               child: TextFormField(
                                 controller: _inputCatatan,
                                 validator: (value) {
-                                if (value!.isEmpty) {
-                                  return 'Catatan tidak boleh kosong';
-                                }
-                                return null;
-                              },
+                                  if (value!.isEmpty) {
+                                    return 'Catatan tidak boleh kosong';
+                                  }
+                                  return null;
+                                },
                                 style: TextStyle(),
                                 keyboardType: TextInputType.multiline,
                                 cursorColor: MyColors.primaryDark,
@@ -468,7 +541,6 @@ class _DetailNasabahState extends State<DetailNasabah> {
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
-
                           Padding(
                             padding: const EdgeInsets.only(left: 25, right: 25),
                             child: Container(
@@ -479,11 +551,11 @@ class _DetailNasabahState extends State<DetailNasabah> {
                               child: TextFormField(
                                 controller: _inputTanggal,
                                 validator: (value) {
-                                if (value!.isEmpty) {
-                                  return 'Tanggal tidak boleh kosong';
-                                }
-                                return null;
-                              },
+                                  if (value!.isEmpty) {
+                                    return 'Tanggal tidak boleh kosong';
+                                  }
+                                  return null;
+                                },
                                 //editing controller of this TextField
                                 decoration: const InputDecoration(
                                   hintStyle: TextStyle(color: Colors.black45),
@@ -665,7 +737,10 @@ class _DetailNasabahState extends State<DetailNasabah> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: <Widget>[
-                                      Text(riwayat['title'].toString().toUpperCase(),
+                                      Text(
+                                          riwayat['title']
+                                              .toString()
+                                              .toUpperCase(),
                                           maxLines: 3,
                                           style: MyText.subhead(context)!
                                               .copyWith(
@@ -682,15 +757,20 @@ class _DetailNasabahState extends State<DetailNasabah> {
                                       Spacer(),
                                       Row(
                                         children: <Widget>[
-                                          Text(riwayat['status'].toString().toUpperCase(),
+                                          Text(
+                                              riwayat['status']
+                                                  .toString()
+                                                  .toUpperCase(),
                                               style: MyText.caption(context)!
                                                   .copyWith(
-                                                      color: MyColors.grey_40)),
+                                                      color: MyColors.grey_40,
+                                                      fontSize: 9)),
                                           Spacer(),
                                           Text(riwayat['tanggal'].toString(),
                                               style: MyText.caption(context)!
                                                   .copyWith(
-                                                      color: MyColors.grey_40)),
+                                                      color: MyColors.grey_40,
+                                                      fontSize: 9)),
                                         ],
                                       ),
                                     ],
@@ -716,7 +796,8 @@ class _DetailNasabahState extends State<DetailNasabah> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => DaftarRiwayat(id: widget.id)),
+                                  builder: (context) =>
+                                      DaftarRiwayat(id: widget.id)),
                             );
                           },
                           child: Text(

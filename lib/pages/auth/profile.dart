@@ -43,6 +43,7 @@ class _ProfilePageState extends State<ProfilePage> {
   var phoneUser;
   var emailUser;
   String phonebaru = '';
+  var _message;
 
   var marketing_id;
 
@@ -78,11 +79,11 @@ class _ProfilePageState extends State<ProfilePage> {
   //     var response = await http.post(url, headers: {
   //       'Authorization': 'Bearer ' + _tokenAuth
   //     }, body: {
-  //       'marketing_id': UserId.toString(),
-  //       'email': _inputEmail.text,
-  //       'password': _inputPassword.text,
-  //       'name': _inputName.text,
-  //       'phone': _inputPhone.text
+  // 'marketing_id': UserId.toString(),
+  // 'email': _inputEmail.text,
+  // 'password': _inputPassword.text,
+  // 'name': _inputName.text,
+  // 'phone': _inputPhone.text
   //     });
   //     setState(() {
   //       _data = json.decode(response.body)['data'];
@@ -155,7 +156,7 @@ class _ProfilePageState extends State<ProfilePage> {
         'email': _inputEmail.text,
         'password': _inputPassword.text,
         'name': _inputName.text,
-        'phone': _inputPhone.text,
+        'phone': _inputPhone.text
       };
 
       Map<String, String> headers = <String, String>{
@@ -169,22 +170,27 @@ class _ProfilePageState extends State<ProfilePage> {
               'https://frontliner.intermediatech.id/api/marketing/update_profile_data'))
         ..headers.addAll(headers)
         ..fields.addAll(requestBody);
-      http.MultipartFile multipartFile =
-          await http.MultipartFile.fromPath('photo', _path);
-      request.files.add(multipartFile);
+      if (_path != '') {
+        http.MultipartFile multipartFile =
+            await http.MultipartFile.fromPath('photo', _path);
+        request.files.add(multipartFile);
+      }
+
       var response = await request.send();
       var res = await http.Response.fromStream(response);
-      
-      
-      if (res.statusCode == 200) {    
+
+      if (res.statusCode == 200) {
         var data = json.decode(res.body)['data'];
-        postData(data['name'].toString(), data['email'], data['phone'], data['photo']);
-          
+        _message = json.decode(res.body)['message'];
+        _showToast(context,_message.toString() );
+        print(_data);
+        postData(data['name'].toString(), data['email'], data['phone'],
+            data['photo']);
+
         print('sukses');
-       _getAllData().whenComplete((){setState(() {
-         
-       });});
-        
+        _getAllData().whenComplete(() {
+          setState(() {});
+        });
       } else {
         print('error1');
       }
@@ -233,8 +239,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       backgroundColor: Colors.grey.shade200,
                       child: CircleAvatar(
                         radius: 75,
-                        backgroundImage:
-                            NetworkImage(photoUser),
+                        backgroundImage: NetworkImage(photoUser),
                       ),
                     ),
                     Positioned(
@@ -244,8 +249,9 @@ class _ProfilePageState extends State<ProfilePage> {
                         child: Padding(
                           padding: const EdgeInsets.all(2.0),
                           child: GestureDetector(
-                            onTap: _onChangeFile,
-                            child: Icon(Icons.add_a_photo, color: Colors.black)),
+                              onTap: _onChangeFile,
+                              child:
+                                  Icon(Icons.add_a_photo, color: Colors.black)),
                         ),
                         decoration: BoxDecoration(
                             border: Border.all(

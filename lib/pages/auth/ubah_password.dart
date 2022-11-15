@@ -122,8 +122,16 @@ class _UbahPasswordState extends State<UbahPassword> {
                 obscureText: passwordHidden,
                 keyboardType: TextInputType.text,
                 style: TextStyle(color: Colors.black),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: "Kata Sandi Lama",
+                  suffixIcon: IconButton(
+                    onPressed: () {
+                      _showPassword();
+                    },
+                    icon: (passwordHidden)
+                        ? const Icon(Icons.visibility)
+                        : const Icon(Icons.visibility_off),
+                  ),
                   labelStyle: TextStyle(color: MyColors.grey_40),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: MyColors.grey_40, width: 1),
@@ -150,8 +158,16 @@ class _UbahPasswordState extends State<UbahPassword> {
                 obscureText: passwordHidden,
                 keyboardType: TextInputType.text,
                 style: TextStyle(color: Colors.black),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: "Kata Sandi Baru",
+                  suffixIcon: IconButton(
+                    onPressed: () {
+                      _showPassword();
+                    },
+                    icon: (passwordHidden)
+                        ? const Icon(Icons.visibility)
+                        : const Icon(Icons.visibility_off),
+                  ),
                   labelStyle: TextStyle(color: MyColors.grey_40),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: MyColors.grey_40, width: 1),
@@ -178,8 +194,16 @@ class _UbahPasswordState extends State<UbahPassword> {
                 obscureText: passwordHidden,
                 keyboardType: TextInputType.text,
                 style: TextStyle(color: Colors.black),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: "Konfirmasi kata sandi lama",
+                  suffixIcon: IconButton(
+                    onPressed: () {
+                      _showPassword();
+                    },
+                    icon: (passwordHidden)
+                        ? const Icon(Icons.visibility)
+                        : const Icon(Icons.visibility_off),
+                  ),
                   labelStyle: TextStyle(color: MyColors.grey_40),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: MyColors.grey_40, width: 1),

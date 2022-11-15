@@ -106,7 +106,7 @@ class _DaftarRiwayatState extends State<DaftarRiwayat> {
                                       Text( _data[index]['note'],
                                           style: MyText.caption(context)!
                                               .copyWith(
-                                                  color: MyColors.grey_40)),
+                                                  color: MyColors.grey_40), maxLines: 3, overflow: TextOverflow.ellipsis),
                                       Spacer(),
                                       Spacer(),
                                       Row(

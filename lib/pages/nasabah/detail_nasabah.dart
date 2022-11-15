@@ -752,7 +752,7 @@ class _DetailNasabahState extends State<DetailNasabah> {
                                       Text(riwayat['note'].toString(),
                                           style: MyText.caption(context)!
                                               .copyWith(
-                                                  color: MyColors.grey_40)),
+                                                  color: MyColors.grey_40),  maxLines: 3, overflow: TextOverflow.ellipsis),
                                       Spacer(),
                                       Spacer(),
                                       Row(

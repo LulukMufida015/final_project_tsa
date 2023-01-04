@@ -11,7 +11,6 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'package:modals/modals.dart';
-import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class LoginPage extends StatefulWidget {
@@ -323,7 +322,7 @@ class CustomEventDialogState extends State<CustomEventDialog> {
     if (await canLaunch(whatsapp)) {
       await launch(whatsapp);
     } else {
-      throw 'Could not launch';
+      throw 'Could not launch' + whatsapp;
     }
   }
 
